@@ -10,10 +10,10 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// PostgreSQL connection pool for Neon
+// PostgreSQL connection pool (local or Neon)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: process.env.DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false
 });
 
 // Initialize PagBank service
@@ -32,16 +32,19 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for videos
   fileFilter: function (req, file, cb) {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
+    const allowedVideoTypes = /mp4|webm|ogg|mov/;
+    const extname = allowedImageTypes.test(path.extname(file.originalname).toLowerCase()) || 
+                   allowedVideoTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedImageTypes.test(file.mimetype) || 
+                   allowedVideoTypes.test(file.mimetype);
     
     if (extname && mimetype) {
       return cb(null, true);
     } else {
-      cb(new Error('Apenas imagens são permitidas (jpeg, jpg, png, gif, webp)'));
+      cb(new Error('Apenas imagens (jpeg, jpg, png, gif, webp) ou vídeos (mp4, webm, ogg, mov) são permitidos'));
     }
   }
 });
@@ -72,6 +75,7 @@ async function initDatabase() {
         nome VARCHAR(255) NOT NULL,
         descricao TEXT,
         foto_url VARCHAR(500),
+        video_url VARCHAR(500),
         valor_meta DECIMAL(10,2) NOT NULL,
         valor_arrecadado DECIMAL(10,2) DEFAULT 0,
         data_inicio TIMESTAMP NOT NULL,
@@ -177,17 +181,17 @@ app.get('/api/leiloes/:id', async (req, res) => {
 // Create new auction (admin)
 app.post('/api/leiloes', async (req, res) => {
   try {
-    const { nome, descricao, foto_url, valor_meta, data_inicio } = req.body;
+    const { nome, descricao, foto_url, video_url, valor_meta, data_inicio } = req.body;
     
     // Calculate end date (30 days from start)
     const data_fim = new Date(data_inicio);
     data_fim.setDate(data_fim.getDate() + 30);
     
     const result = await pool.query(`
-      INSERT INTO leiloes (nome, descricao, foto_url, valor_meta, data_inicio, data_fim)
+      INSERT INTO leiloes (nome, descricao, foto_url, video_url, valor_meta, data_inicio, data_fim)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
-    `, [nome, descricao, foto_url, valor_meta, data_inicio, data_fim]);
+    `, [nome, descricao, foto_url, video_url, valor_meta, data_inicio, data_fim]);
     
     res.json(result.rows[0]);
   } catch (error) {
@@ -661,6 +665,20 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
     
     const fotoUrl = `/uploads/${req.file.filename}`;
     res.json({ success: true, fotoUrl: fotoUrl });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upload product video
+app.post('/api/upload-video', upload.single('video'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+    
+    const videoUrl = `/uploads/${req.file.filename}`;
+    res.json({ success: true, videoUrl: videoUrl });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -42,6 +42,13 @@
             <label>URL da foto (opcional)
               <input type="url" id="auctionPhoto" placeholder="https://...">
             </label>
+            <label>Vídeo do produto (opcional)
+              <input type="file" id="auctionVideoFile" accept="video/mp4,video/webm,video/ogg,video/quicktime">
+              <small>Ou cole a URL do vídeo abaixo</small>
+            </label>
+            <label>URL do vídeo (opcional)
+              <input type="url" id="auctionVideo" placeholder="https://...">
+            </label>
             <label>Valor meta (R$)
               <input type="number" step="0.01" min="0.01" id="auctionMeta" required placeholder="Ex: 5000.00">
             </label>
@@ -125,10 +132,13 @@
       const descricao = document.getElementById('auctionDesc').value;
       const fotoFile = document.getElementById('auctionPhotoFile').files[0];
       const foto_url = document.getElementById('auctionPhoto').value;
+      const videoFile = document.getElementById('auctionVideoFile').files[0];
+      const video_url = document.getElementById('auctionVideo').value;
       const valor_meta = parseFloat(document.getElementById('auctionMeta').value);
       const data_inicio = document.getElementById('auctionStart').value;
       
       let finalFotoUrl = foto_url;
+      let finalVideoUrl = video_url;
       
       try {
         // Upload photo if file is selected
@@ -151,10 +161,30 @@
           }
         }
         
+        // Upload video if file is selected
+        if (videoFile) {
+          const formData = new FormData();
+          formData.append('video', videoFile);
+          
+          const uploadResponse = await fetch(`${API_BASE}/upload-video`, {
+            method: 'POST',
+            body: formData
+          });
+          
+          const uploadResult = await uploadResponse.json();
+          
+          if (uploadResult.success) {
+            finalVideoUrl = uploadResult.videoUrl;
+          } else {
+            alert('Erro ao fazer upload do vídeo: ' + uploadResult.error);
+            return;
+          }
+        }
+        
         const response = await fetch(`${API_BASE}/leiloes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, valor_meta, data_inicio })
+          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, video_url: finalVideoUrl, valor_meta, data_inicio })
         });
         
         const result = await response.json();

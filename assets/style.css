@@ -5,6 +5,11 @@
 .qr-code-image{max-width:250px;border-radius:10px;border:2px solid #39ff88}
 .expires{color:#ffaa00;font-size:13px;margin:10px 0;background:rgba(255,170,0,0.1);padding:10px;border-radius:8px;text-align:center}
 
+/* Video Styles */
+video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
+.product-img video{width:100%;height:175px;object-fit:cover}
+.auction-image video{width:100%;height:100%;object-fit:contain}
+
 /* Auction Styles */
 .auction-card{cursor:pointer}
 .auction-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0;background:#0a1215;padding:12px;border-radius:10px;border:1px solid #1b292d}

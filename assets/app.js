@@ -51,7 +51,10 @@ async function loadAuctions() {
       return `
         <article class="product auction-card" data-id="${a.id}">
           <div class="product-img">
-            ${a.foto_url ? `<img src="${a.foto_url}" alt="${a.nome}">` : '📱'}
+            ${a.video_url ? 
+              `<video src="${a.video_url}" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>` : 
+              (a.foto_url ? `<img src="${a.foto_url}" alt="${a.nome}">` : '📱')
+            }
           </div>
           <div class="product-body">
             <span class="tag">Leilão 30 dias</span>
@@ -112,7 +115,10 @@ async function openAuction(auctionId) {
         </div>
         
         <div class="auction-image">
-          ${auction.foto_url ? `<img src="${auction.foto_url}" alt="${auction.nome}">` : '📱'}
+          ${auction.video_url ? 
+            `<video src="${auction.video_url}" controls autoplay muted loop></video>` : 
+            (auction.foto_url ? `<img src="${auction.foto_url}" alt="${auction.nome}">` : '📱')
+          }
         </div>
         
         <div class="auction-info">
