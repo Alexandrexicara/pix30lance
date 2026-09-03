@@ -35,16 +35,44 @@
             <label>Descrição
               <textarea id="auctionDesc" required placeholder="Descrição detalhada do produto"></textarea>
             </label>
-            <label>Foto do produto
+            <label>Foto 1 (principal)
               <input type="file" id="auctionPhotoFile" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
-              <small>Ou cole a URL da imagem abaixo</small>
+              <small>Ou cole a URL abaixo</small>
             </label>
-            <label>URL da foto (opcional)
+            <label>URL da foto 1 (opcional)
               <input type="url" id="auctionPhoto" placeholder="https://...">
+            </label>
+            <label>Foto 2 (opcional)
+              <input type="file" id="auctionPhoto2File" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+              <small>Ou cole a URL abaixo</small>
+            </label>
+            <label>URL da foto 2 (opcional)
+              <input type="url" id="auctionPhoto2" placeholder="https://...">
+            </label>
+            <label>Foto 3 (opcional)
+              <input type="file" id="auctionPhoto3File" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+              <small>Ou cole a URL abaixo</small>
+            </label>
+            <label>URL da foto 3 (opcional)
+              <input type="url" id="auctionPhoto3" placeholder="https://...">
+            </label>
+            <label>Foto 4 (opcional)
+              <input type="file" id="auctionPhoto4File" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+              <small>Ou cole a URL abaixo</small>
+            </label>
+            <label>URL da foto 4 (opcional)
+              <input type="url" id="auctionPhoto4" placeholder="https://...">
+            </label>
+            <label>Foto 5 (opcional)
+              <input type="file" id="auctionPhoto5File" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+              <small>Ou cole a URL abaixo</small>
+            </label>
+            <label>URL da foto 5 (opcional)
+              <input type="url" id="auctionPhoto5" placeholder="https://...">
             </label>
             <label>Vídeo do produto (opcional)
               <input type="file" id="auctionVideoFile" accept="video/mp4,video/webm,video/ogg,video/quicktime">
-              <small>Ou cole a URL do vídeo abaixo</small>
+              <small>Ou cole a URL abaixo</small>
             </label>
             <label>URL do vídeo (opcional)
               <input type="url" id="auctionVideo" placeholder="https://...">
@@ -132,59 +160,77 @@
       const descricao = document.getElementById('auctionDesc').value;
       const fotoFile = document.getElementById('auctionPhotoFile').files[0];
       const foto_url = document.getElementById('auctionPhoto').value;
+      const fotoFile2 = document.getElementById('auctionPhoto2File').files[0];
+      const foto_url_2 = document.getElementById('auctionPhoto2').value;
+      const fotoFile3 = document.getElementById('auctionPhoto3File').files[0];
+      const foto_url_3 = document.getElementById('auctionPhoto3').value;
+      const fotoFile4 = document.getElementById('auctionPhoto4File').files[0];
+      const foto_url_4 = document.getElementById('auctionPhoto4').value;
+      const fotoFile5 = document.getElementById('auctionPhoto5File').files[0];
+      const foto_url_5 = document.getElementById('auctionPhoto5').value;
       const videoFile = document.getElementById('auctionVideoFile').files[0];
       const video_url = document.getElementById('auctionVideo').value;
       const valor_meta = parseFloat(document.getElementById('auctionMeta').value);
       const data_inicio = document.getElementById('auctionStart').value;
       
       let finalFotoUrl = foto_url;
+      let finalFotoUrl2 = foto_url_2;
+      let finalFotoUrl3 = foto_url_3;
+      let finalFotoUrl4 = foto_url_4;
+      let finalFotoUrl5 = foto_url_5;
       let finalVideoUrl = video_url;
       
       try {
-        // Upload photo if file is selected
+        // Upload photos if files are selected
         if (fotoFile) {
           const formData = new FormData();
           formData.append('foto', fotoFile);
-          
-          const uploadResponse = await fetch(`${API_BASE}/upload`, {
-            method: 'POST',
-            body: formData
-          });
-          
+          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
           const uploadResult = await uploadResponse.json();
-          
-          if (uploadResult.success) {
-            finalFotoUrl = uploadResult.fotoUrl;
-          } else {
-            alert('Erro ao fazer upload da foto: ' + uploadResult.error);
-            return;
-          }
+          if (uploadResult.success) finalFotoUrl = uploadResult.fotoUrl;
+        }
+        if (fotoFile2) {
+          const formData = new FormData();
+          formData.append('foto', fotoFile2);
+          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+          const uploadResult = await uploadResponse.json();
+          if (uploadResult.success) finalFotoUrl2 = uploadResult.fotoUrl;
+        }
+        if (fotoFile3) {
+          const formData = new FormData();
+          formData.append('foto', fotoFile3);
+          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+          const uploadResult = await uploadResponse.json();
+          if (uploadResult.success) finalFotoUrl3 = uploadResult.fotoUrl;
+        }
+        if (fotoFile4) {
+          const formData = new FormData();
+          formData.append('foto', fotoFile4);
+          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+          const uploadResult = await uploadResponse.json();
+          if (uploadResult.success) finalFotoUrl4 = uploadResult.fotoUrl;
+        }
+        if (fotoFile5) {
+          const formData = new FormData();
+          formData.append('foto', fotoFile5);
+          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+          const uploadResult = await uploadResponse.json();
+          if (uploadResult.success) finalFotoUrl5 = uploadResult.fotoUrl;
         }
         
         // Upload video if file is selected
         if (videoFile) {
           const formData = new FormData();
           formData.append('video', videoFile);
-          
-          const uploadResponse = await fetch(`${API_BASE}/upload-video`, {
-            method: 'POST',
-            body: formData
-          });
-          
+          const uploadResponse = await fetch(`${API_BASE}/upload-video`, { method: 'POST', body: formData });
           const uploadResult = await uploadResponse.json();
-          
-          if (uploadResult.success) {
-            finalVideoUrl = uploadResult.videoUrl;
-          } else {
-            alert('Erro ao fazer upload do vídeo: ' + uploadResult.error);
-            return;
-          }
+          if (uploadResult.success) finalVideoUrl = uploadResult.videoUrl;
         }
         
         const response = await fetch(`${API_BASE}/leiloes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, video_url: finalVideoUrl, valor_meta, data_inicio })
+          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, foto_url_2: finalFotoUrl2, foto_url_3: finalFotoUrl3, foto_url_4: finalFotoUrl4, foto_url_5: finalFotoUrl5, video_url: finalVideoUrl, valor_meta, data_inicio })
         });
         
         const result = await response.json();

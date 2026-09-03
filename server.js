@@ -6,9 +6,18 @@ const { v4: uuidv4 } = require('uuid');
 const PagBankService = require('./pagbank');
 const multer = require('multer');
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // PostgreSQL connection pool (local or Neon)
 const pool = new Pool({
@@ -19,14 +28,13 @@ const pool = new Pool({
 // Initialize PagBank service
 const pagbank = new PagBankService();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+// Configure multer for file uploads (Cloudinary)
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'pix30-leiloes',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
+    resource_type: 'auto'
   }
 });
 
@@ -75,6 +83,10 @@ async function initDatabase() {
         nome VARCHAR(255) NOT NULL,
         descricao TEXT,
         foto_url VARCHAR(500),
+        foto_url_2 VARCHAR(500),
+        foto_url_3 VARCHAR(500),
+        foto_url_4 VARCHAR(500),
+        foto_url_5 VARCHAR(500),
         video_url VARCHAR(500),
         valor_meta DECIMAL(10,2) NOT NULL,
         valor_arrecadado DECIMAL(10,2) DEFAULT 0,
@@ -181,17 +193,17 @@ app.get('/api/leiloes/:id', async (req, res) => {
 // Create new auction (admin)
 app.post('/api/leiloes', async (req, res) => {
   try {
-    const { nome, descricao, foto_url, video_url, valor_meta, data_inicio } = req.body;
+    const { nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, video_url, valor_meta, data_inicio } = req.body;
     
     // Calculate end date (30 days from start)
     const data_fim = new Date(data_inicio);
     data_fim.setDate(data_fim.getDate() + 30);
     
     const result = await pool.query(`
-      INSERT INTO leiloes (nome, descricao, foto_url, video_url, valor_meta, data_inicio, data_fim)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO leiloes (nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, video_url, valor_meta, data_inicio, data_fim)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
-    `, [nome, descricao, foto_url, video_url, valor_meta, data_inicio, data_fim]);
+    `, [nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, video_url, valor_meta, data_inicio, data_fim]);
     
     res.json(result.rows[0]);
   } catch (error) {
@@ -663,7 +675,7 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
     
-    const fotoUrl = `/uploads/${req.file.filename}`;
+    const fotoUrl = req.file.path;
     res.json({ success: true, fotoUrl: fotoUrl });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -677,7 +689,7 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
     
-    const videoUrl = `/uploads/${req.file.filename}`;
+    const videoUrl = req.file.path;
     res.json({ success: true, videoUrl: videoUrl });
   } catch (error) {
     res.status(500).json({ error: error.message });

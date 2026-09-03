@@ -48,12 +48,23 @@ async function loadAuctions() {
     
     el.innerHTML = auctions.map(a => {
       const percentMeta = Math.min((a.arrecadado_real / a.valor_meta) * 100, 100).toFixed(1);
+      const photos = [a.foto_url, a.foto_url_2, a.foto_url_3, a.foto_url_4, a.foto_url_5].filter(url => url);
+      
       return `
         <article class="product auction-card" data-id="${a.id}">
           <div class="product-img">
             ${a.video_url ? 
               `<video src="${a.video_url}" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>` : 
-              (a.foto_url ? `<img src="${a.foto_url}" alt="${a.nome}">` : '📱')
+              (photos.length > 0 ? 
+                (photos.length > 1 ? 
+                  `<div class="photo-gallery">
+                    <img src="${photos[0]}" alt="${a.nome}">
+                    <div class="photo-count">${photos.length} fotos</div>
+                  </div>` : 
+                  `<img src="${photos[0]}" alt="${a.nome}">`
+                ) : 
+                '📱'
+              )
             }
           </div>
           <div class="product-body">
@@ -117,7 +128,21 @@ async function openAuction(auctionId) {
         <div class="auction-image">
           ${auction.video_url ? 
             `<video src="${auction.video_url}" controls autoplay muted loop></video>` : 
-            (auction.foto_url ? `<img src="${auction.foto_url}" alt="${auction.nome}">` : '📱')
+            (() => {
+              const photos = [auction.foto_url, auction.foto_url_2, auction.foto_url_3, auction.foto_url_4, auction.foto_url_5].filter(url => url);
+              if (photos.length === 0) return '📱';
+              if (photos.length === 1) return `<img src="${photos[0]}" alt="${auction.nome}">`;
+              return `
+                <div class="photo-gallery-detail">
+                  ${photos.map((photo, index) => `
+                    <img src="${photo}" alt="${auction.nome} - Foto ${index + 1}" class="${index === 0 ? 'active' : ''}">
+                  `).join('')}
+                  <div class="photo-indicators">
+                    ${photos.map((_, index) => `<span class="${index === 0 ? 'active' : ''}"></span>`).join('')}
+                  </div>
+                </div>
+              `;
+            })()
           }
         </div>
         
