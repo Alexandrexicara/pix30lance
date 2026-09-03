@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#05080a">
+  <title>PIX30 • Leilão de Menor Lance Único</title>
+  <meta name="description" content="Plataforma de leilão reverso de menor lance único com duração de 30 dias.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container nav">
+      <a class="logo" href="index.html"><span>PIX</span><b>30</b></a>
+      <nav>
+        <a href="#leiloes">Leilões</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#regras">Regras</a>
+      </nav>
+      <button class="cart-btn" id="openMyBids">👤 Meus Lances</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">LEILÃO REVERSO • 30 DIAS</p>
+          <h1>Dê seu <span>menor lance único</span> e concorra.</h1>
+          <p class="hero-text">Participe dos leilões de 30 dias. O vencedor será quem der o menor valor que ninguém mais escolheu. Pague seu lance via Pix.</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#leiloes">Ver leilões</a>
+            <a class="btn ghost" href="#como-funciona">Como funciona</a>
+          </div>
+          <div class="trust">
+            <span>✓ Leilão de 30 dias</span><span>✓ Menor lance único</span><span>✓ Pagamento via Pix</span>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="glow"></div>
+          <p>LEILÃO ATIVO</p>
+          <strong>Duração de <em>30 dias</em></strong>
+          <span>para cada leilão.</span>
+          <div class="mini-price">Vence o <b>menor lance único</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="leiloes" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div><p class="eyebrow">LEILÕES</p><h2>Leilões em andamento</h2></div>
+        </div>
+        <div id="auctions" class="products">
+          <p class="loading">Carregando leilões...</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="como-funciona" class="section how">
+      <div class="container">
+        <div class="section-head"><div><p class="eyebrow">PASSO A PASSO</p><h2>Como funciona</h2></div></div>
+        <div class="steps">
+          <article><i>01</i><h3>Escolha o leilão</h3><p>Selecione o produto que deseja participar.</p></article>
+          <article><i>02</i><h3>Dê seu lance</h3><p>Informe o valor que deseja oferecer como lance.</p></article>
+          <article><i>03</i><h3>Pague via Pix</h3><p>Realize o pagamento do valor do seu lance.</p></article>
+          <article><i>04</i><h3>Aguarde o resultado</h3><p>Ao final de 30 dias, o menor lance único vence.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="regras" class="section">
+      <div class="container">
+        <div class="section-head"><div><p class="eyebrow">TERMOS</p><h2>Regras do Leilão</h2></div></div>
+        <div class="rules-content">
+          <h3>Conceito do Leilão</h3>
+          <p>Cada leilão tem duração de 30 dias. Os participantes dão lances com valores de sua escolha e pagam esse valor via Pix. O vencedor é quem der o <strong>menor lance único</strong> - ou seja, o menor valor que foi escolhido por apenas uma pessoa.</p>
+          
+          <h3>Exemplo</h3>
+          <ul>
+            <li>João dá lance de R$ 5,00</li>
+            <li>Maria dá lance de R$ 5,00</li>
+            <li>Carlos dá lance de R$ 8,00</li>
+            <li>Pedro dá lance de R$ 10,00</li>
+          </ul>
+          <p>Neste caso, R$ 5,00 NÃO vence (repetido). R$ 8,00 é o menor lance único, então Carlos vence.</p>
+          
+          <h3>Regra dos 70%</h3>
+          <p>Cada leilão tem uma meta de arrecadação. Se a meta for atingida em 30 dias, o vencedor recebe o produto. Se a meta NÃO for atingida, o vencedor recebe 70% do valor arrecadado.</p>
+          
+          <h3>Importante</h3>
+          <p>Você NÃO está comprando o produto pelo valor do lance. O valor informado é seu lance para participar do leilão. O pagamento via Pix confirma sua participação.</p>
+          
+          <a class="btn ghost" href="regras.html">Ver regras completas</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="container footer"><div class="logo"><span>PIX</span><b>30</b></div><p>© 2026 PIX30 • Plataforma de leilão de menor lance único.</p></div></footer>
+
+  <!-- Modal de Detalhes do Leilão -->
+  <div class="modal" id="auctionModal" aria-hidden="true">
+    <div class="modal-box large">
+      <button class="modal-close" id="closeAuctionModal">✕</button>
+      <div id="auctionDetails"></div>
+    </div>
+  </div>
+
+  <!-- Modal de Meus Lances -->
+  <div class="modal" id="myBidsModal" aria-hidden="true">
+    <div class="modal-box large">
+      <button class="modal-close" id="closeMyBids">✕</button>
+      <p class="eyebrow">MEUS LANCES</p>
+      <h2>Meus Lances e Participações</h2>
+      <div id="myBidsContent">
+        <form id="userForm">
+          <label>Nome<input required id="userName" placeholder="Seu nome"></label>
+          <label>E-mail<input required type="email" id="userEmail" placeholder="voce@email.com"></label>
+          <label>WhatsApp<input required id="userPhone" placeholder="(00) 00000-0000"></label>
+          <button class="btn primary full" type="submit">Ver meus lances</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Pagamento Pix -->
+  <div class="modal" id="pixModal" aria-hidden="true">
+    <div class="modal-box center">
+      <button class="modal-close" id="closePixModal">✕</button>
+      <p class="eyebrow">PAGAMENTO PIX</p>
+      <h2>Pague seu lance via Pix</h2>
+      <div class="pix-code" id="pixCode">CHAVE-PIX-AQUI</div>
+      <p>Valor do lance: <strong id="pixAmount">R$ 0,00</strong></p>
+      <p class="warning">⚠️ Você NÃO está comprando o produto. Este é o valor do seu lance para participar do leilão.</p>
+      <button class="btn primary full" id="copyPix">Copiar chave Pix</button>
+      <button class="btn ghost full" id="confirmPix">Confirmar pagamento</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

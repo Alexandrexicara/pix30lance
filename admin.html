@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#05080a">
+  <title>PIX30 • Painel Administrativo</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container nav">
+      <a class="logo" href="index.html"><span>PIX</span><b>30</b></a>
+      <nav>
+        <a href="admin.html">Admin</a>
+        <a href="index.html">Voltar ao site</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div><p class="eyebrow">ADMINISTRAÇÃO</p><h2>Painel Administrativo</h2></div>
+        </div>
+
+        <!-- Criar Novo Leilão -->
+        <div class="admin-section">
+          <h3>Criar Novo Leilão</h3>
+          <form id="createAuctionForm">
+            <label>Nome do produto
+              <input type="text" id="auctionName" required placeholder="Ex: iPhone 15 Pro">
+            </label>
+            <label>Descrição
+              <textarea id="auctionDesc" required placeholder="Descrição detalhada do produto"></textarea>
+            </label>
+            <label>Foto do produto
+              <input type="file" id="auctionPhotoFile" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+              <small>Ou cole a URL da imagem abaixo</small>
+            </label>
+            <label>URL da foto (opcional)
+              <input type="url" id="auctionPhoto" placeholder="https://...">
+            </label>
+            <label>Valor meta (R$)
+              <input type="number" step="0.01" min="0.01" id="auctionMeta" required placeholder="Ex: 5000.00">
+            </label>
+            <label>Data de início
+              <input type="datetime-local" id="auctionStart" required>
+            </label>
+            <button type="submit" class="btn primary">Criar leilão</button>
+          </form>
+        </div>
+
+        <!-- Lista de Leilões -->
+        <div class="admin-section">
+          <h3>Leilões Cadastrados</h3>
+          <div id="adminAuctions">
+            <p class="loading">Carregando leilões...</p>
+          </div>
+        </div>
+
+        <!-- Lances Recentes -->
+        <div class="admin-section">
+          <h3>Ações Rápidas</h3>
+          <div class="quick-actions">
+            <button class="btn ghost" onclick="loadAdminAuctions()">Atualizar lista</button>
+            <button class="btn ghost" onclick="showAllBids()">Ver todos os lances</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="container footer"><div class="logo"><span>PIX</span><b>30</b></div><p>© 2026 PIX30 • Painel Administrativo</p></div></footer>
+
+  <script>
+    const API_BASE = 'http://localhost:3000/api';
+
+    // Load admin auctions
+    async function loadAdminAuctions() {
+      try {
+        const response = await fetch(`${API_BASE}/admin/leiloes`);
+        const auctions = await response.json();
+        
+        const el = document.getElementById('adminAuctions');
+        if (auctions.length === 0) {
+          el.innerHTML = '<p class="no-auctions">Nenhum leilão cadastrado.</p>';
+          return;
+        }
+        
+        el.innerHTML = auctions.map(a => `
+          <div class="admin-auction-item">
+            <div class="admin-auction-header">
+              <strong>${a.nome}</strong>
+              <span class="status ${a.status}">${a.status}</span>
+            </div>
+            <div class="admin-auction-details">
+              <p>Meta: ${a.valor_meta.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</p>
+              <p>Arrecadado: ${a.arrecadado_real?.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) || 'R$ 0,00'}</p>
+              <p>Participantes: ${a.participantes || 0}</p>
+              <p>Início: ${new Date(a.data_inicio).toLocaleString('pt-BR')}</p>
+              <p>Fim: ${new Date(a.data_fim).toLocaleString('pt-BR')}</p>
+              ${a.status === 'ativo' && new Date(a.data_fim) < new Date() ? `
+                <button class="btn primary" onclick="calculateWinner('${a.id}')">Calcular Vencedor</button>
+              ` : ''}
+              ${a.valor_vencedor ? `
+                <p class="winner-info">Vencedor: lance de ${a.valor_vencedor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</p>
+                <p class="meta-info">Meta atingida: ${a.meta_atingida ? 'Sim' : 'Não (70% do arrecadado)'}</p>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Erro ao carregar leilões:', error);
+        document.getElementById('adminAuctions').innerHTML = '<p class="error">Erro ao carregar leilões.</p>';
+      }
+    }
+
+    // Create new auction
+    async function createAuction(e) {
+      e.preventDefault();
+      
+      const nome = document.getElementById('auctionName').value;
+      const descricao = document.getElementById('auctionDesc').value;
+      const fotoFile = document.getElementById('auctionPhotoFile').files[0];
+      const foto_url = document.getElementById('auctionPhoto').value;
+      const valor_meta = parseFloat(document.getElementById('auctionMeta').value);
+      const data_inicio = document.getElementById('auctionStart').value;
+      
+      let finalFotoUrl = foto_url;
+      
+      try {
+        // Upload photo if file is selected
+        if (fotoFile) {
+          const formData = new FormData();
+          formData.append('foto', fotoFile);
+          
+          const uploadResponse = await fetch(`${API_BASE}/upload`, {
+            method: 'POST',
+            body: formData
+          });
+          
+          const uploadResult = await uploadResponse.json();
+          
+          if (uploadResult.success) {
+            finalFotoUrl = uploadResult.fotoUrl;
+          } else {
+            alert('Erro ao fazer upload da foto: ' + uploadResult.error);
+            return;
+          }
+        }
+        
+        const response = await fetch(`${API_BASE}/leiloes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, valor_meta, data_inicio })
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          alert(result.error);
+          return;
+        }
+        
+        alert(' Leilão criado com sucesso!');
+        document.getElementById('createAuctionForm').reset();
+        loadAdminAuctions();
+      } catch (error) {
+        console.error('Erro ao criar leilão:', error);
+        alert('Erro ao criar leilão. Tente novamente.');
+      }
+    }
+
+    // Calculate winner
+    async function calculateWinner(auctionId) {
+      if (!confirm('Deseja calcular o vencedor deste leilão? Esta ação encerrará o leilão.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/leiloes/${auctionId}/calcular-vencedor`, {
+          method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          alert(result.error);
+          return;
+        }
+        
+        alert(`✓ Vencedor calculado!\n\nValor do lance vencedor: ${result.valor_vencedor?.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) || 'Nenhum'}\nValor final: ${result.valor_final?.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) || 'N/A'}\nMeta atingida: ${result.meta_atingida ? 'Sim' : 'Não'}`);
+        loadAdminAuctions();
+      } catch (error) {
+        console.error('Erro ao calcular vencedor:', error);
+        alert('Erro ao calcular vencedor. Tente novamente.');
+      }
+    }
+
+    // Show all bids (placeholder for future implementation)
+    function showAllBids() {
+      alert('Funcionalidade de ver todos os lances será implementada em breve.');
+    }
+
+    // Set default start date to now
+    document.getElementById('auctionStart').value = new Date().toISOString().slice(0, 16);
+    
+    // Event listeners
+    document.getElementById('createAuctionForm').onsubmit = createAuction;
+    
+    // Initialize
+    loadAdminAuctions();
+  </script>
+</body>
+</html>
