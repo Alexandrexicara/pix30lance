@@ -40,19 +40,13 @@ const pool = new Pool({
 // Initialize PagBank service
 const pagbank = new PagBankService();
 
-// Configure multer for file uploads (using local storage for reliability)
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const fs = require('fs');
-    const uploadDir = path.join(__dirname, 'public', 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+// Configure multer for file uploads (Cloudinary only - no local fallback)
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'pix30-leiloes',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
+    resource_type: 'auto'
   }
 });
 
