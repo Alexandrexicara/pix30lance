@@ -713,9 +713,13 @@ app.get('/api/admin/lances', async (req, res) => {
 // Upload product image
 app.post('/api/upload', upload.single('foto'), (req, res) => {
   try {
+    console.log('Upload iniciado');
     if (!req.file) {
+      console.error('Nenhum arquivo enviado');
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
+    
+    console.log('Arquivo recebido:', req.file);
     
     let fotoUrl;
     if (req.file.path) {
@@ -726,6 +730,7 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
       fotoUrl = `/uploads/${req.file.filename}`;
     }
     
+    console.log('URL gerada:', fotoUrl);
     res.json({ success: true, fotoUrl: fotoUrl });
   } catch (error) {
     console.error('Erro no upload:', error);
