@@ -13,11 +13,18 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+if (process.env.CLOUDINARY_URL) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    url: process.env.CLOUDINARY_URL
+  });
+} else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+}
 
 // PostgreSQL connection pool (local or Neon)
 const pool = new Pool({
@@ -28,15 +35,33 @@ const pool = new Pool({
 // Initialize PagBank service
 const pagbank = new PagBankService();
 
-// Configure multer for file uploads (Cloudinary)
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'pix30-leiloes',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
-    resource_type: 'auto'
-  }
-});
+// Configure multer for file uploads (Cloudinary or fallback)
+let storage;
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'pix30-leiloes',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
+      resource_type: 'auto'
+    }
+  });
+} else {
+  storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const fs = require('fs');
+      const uploadDir = path.join(__dirname, 'public', 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+}
 
 const upload = multer({ 
   storage: storage,
@@ -695,9 +720,18 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
     
-    const fotoUrl = req.file.path;
+    let fotoUrl;
+    if (req.file.path) {
+      fotoUrl = req.file.path;
+    } else if (req.file.secure_url) {
+      fotoUrl = req.file.secure_url;
+    } else {
+      fotoUrl = `/uploads/${req.file.filename}`;
+    }
+    
     res.json({ success: true, fotoUrl: fotoUrl });
   } catch (error) {
+    console.error('Erro no upload:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -709,9 +743,18 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
     
-    const videoUrl = req.file.path;
+    let videoUrl;
+    if (req.file.path) {
+      videoUrl = req.file.path;
+    } else if (req.file.secure_url) {
+      videoUrl = req.file.secure_url;
+    } else {
+      videoUrl = `/uploads/${req.file.filename}`;
+    }
+    
     res.json({ success: true, videoUrl: videoUrl });
   } catch (error) {
+    console.error('Erro no upload de vídeo:', error);
     res.status(500).json({ error: error.message });
   }
 });
