@@ -668,6 +668,26 @@ app.get('/api/admin/leiloes', async (req, res) => {
   }
 });
 
+// Admin: Get all bids
+app.get('/api/admin/lances', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        l.*,
+        u.nome,
+        le.nome as leilao_nome
+      FROM lances l
+      LEFT JOIN usuarios u ON l.usuario_id = u.id
+      LEFT JOIN leiloes le ON l.leilao_id = le.id
+      ORDER BY l.criado_em DESC
+    `);
+    res.json(result.rows || []);
+  } catch (error) {
+    console.error('Erro ao buscar lances admin:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Upload product image
 app.post('/api/upload', upload.single('foto'), (req, res) => {
   try {

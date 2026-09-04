@@ -275,9 +275,27 @@
       }
     }
 
-    // Show all bids (placeholder for future implementation)
-    function showAllBids() {
-      alert('Funcionalidade de ver todos os lances será implementada em breve.');
+    // Show all bids
+    async function showAllBids() {
+      try {
+        const response = await fetch(`${API_BASE}/admin/lances`);
+        const bids = await response.json();
+        
+        if (bids.length === 0) {
+          alert('Nenhum lance encontrado.');
+          return;
+        }
+        
+        let message = 'Lances cadastrados:\n\n';
+        bids.forEach((bid, index) => {
+          message += `${index + 1}. ${bid.nome} - R$ ${bid.valor?.toFixed(2) || 'N/A'} - ${bid.status}\n`;
+        });
+        
+        alert(message);
+      } catch (error) {
+        console.error('Erro ao carregar lances:', error);
+        alert('Erro ao carregar lances. Tente novamente.');
+      }
     }
 
     // Set default start date to now
