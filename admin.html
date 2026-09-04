@@ -186,36 +186,101 @@
           const formData = new FormData();
           formData.append('foto', fotoFile);
           const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadResult = await uploadResponse.json();
+          const uploadText = await uploadResponse.text();
+          console.log('Upload response:', uploadText);
+          let uploadResult;
+          try {
+            uploadResult = JSON.parse(uploadText);
+          } catch (e) {
+            console.error('Resposta não é JSON:', uploadText);
+            alert('Erro no upload: resposta inválida do servidor');
+            return;
+          }
           if (uploadResult.success) finalFotoUrl = uploadResult.fotoUrl;
+          else {
+            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
+            return;
+          }
         }
         if (fotoFile2) {
           const formData = new FormData();
           formData.append('foto', fotoFile2);
           const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadResult = await uploadResponse.json();
+          const uploadText = await uploadResponse.text();
+          console.log('Upload response:', uploadText);
+          let uploadResult;
+          try {
+            uploadResult = JSON.parse(uploadText);
+          } catch (e) {
+            console.error('Resposta não é JSON:', uploadText);
+            alert('Erro no upload: resposta inválida do servidor');
+            return;
+          }
           if (uploadResult.success) finalFotoUrl2 = uploadResult.fotoUrl;
+          else {
+            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
+            return;
+          }
         }
         if (fotoFile3) {
           const formData = new FormData();
           formData.append('foto', fotoFile3);
           const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadResult = await uploadResponse.json();
+          const uploadText = await uploadResponse.text();
+          console.log('Upload response:', uploadText);
+          let uploadResult;
+          try {
+            uploadResult = JSON.parse(uploadText);
+          } catch (e) {
+            console.error('Resposta não é JSON:', uploadText);
+            alert('Erro no upload: resposta inválida do servidor');
+            return;
+          }
           if (uploadResult.success) finalFotoUrl3 = uploadResult.fotoUrl;
+          else {
+            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
+            return;
+          }
         }
         if (fotoFile4) {
           const formData = new FormData();
           formData.append('foto', fotoFile4);
           const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadResult = await uploadResponse.json();
+          const uploadText = await uploadResponse.text();
+          console.log('Upload response:', uploadText);
+          let uploadResult;
+          try {
+            uploadResult = JSON.parse(uploadText);
+          } catch (e) {
+            console.error('Resposta não é JSON:', uploadText);
+            alert('Erro no upload: resposta inválida do servidor');
+            return;
+          }
           if (uploadResult.success) finalFotoUrl4 = uploadResult.fotoUrl;
+          else {
+            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
+            return;
+          }
         }
         if (fotoFile5) {
           const formData = new FormData();
           formData.append('foto', fotoFile5);
           const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadResult = await uploadResponse.json();
+          const uploadText = await uploadResponse.text();
+          console.log('Upload response:', uploadText);
+          let uploadResult;
+          try {
+            uploadResult = JSON.parse(uploadText);
+          } catch (e) {
+            console.error('Resposta não é JSON:', uploadText);
+            alert('Erro no upload: resposta inválida do servidor');
+            return;
+          }
           if (uploadResult.success) finalFotoUrl5 = uploadResult.fotoUrl;
+          else {
+            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
+            return;
+          }
         }
         
         // Upload video if file is selected
@@ -223,8 +288,21 @@
           const formData = new FormData();
           formData.append('video', videoFile);
           const uploadResponse = await fetch(`${API_BASE}/upload-video`, { method: 'POST', body: formData });
-          const uploadResult = await uploadResponse.json();
+          const uploadText = await uploadResponse.text();
+          console.log('Upload video response:', uploadText);
+          let uploadResult;
+          try {
+            uploadResult = JSON.parse(uploadText);
+          } catch (e) {
+            console.error('Resposta não é JSON:', uploadText);
+            alert('Erro no upload de vídeo: resposta inválida do servidor');
+            return;
+          }
           if (uploadResult.success) finalVideoUrl = uploadResult.videoUrl;
+          else {
+            alert('Erro no upload de vídeo: ' + (uploadResult.error || 'Erro desconhecido'));
+            return;
+          }
         }
         
         const response = await fetch(`${API_BASE}/leiloes`, {

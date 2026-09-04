@@ -13,14 +13,22 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Configure Cloudinary
-if (process.env.CLOUDINARY_URL) {
-  cloudinary.config(process.env.CLOUDINARY_URL);
-} else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-  });
+try {
+  if (process.env.CLOUDINARY_URL) {
+    cloudinary.config(process.env.CLOUDINARY_URL);
+    console.log('Cloudinary configurado com URL');
+  } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+    console.log('Cloudinary configurado com credenciais separadas');
+  } else {
+    console.log('Cloudinary não configurado, usando upload local');
+  }
+} catch (error) {
+  console.error('Erro ao configurar Cloudinary:', error);
 }
 
 // PostgreSQL connection pool (local or Neon)
@@ -32,33 +40,21 @@ const pool = new Pool({
 // Initialize PagBank service
 const pagbank = new PagBankService();
 
-// Configure multer for file uploads (Cloudinary or fallback)
-let storage;
-if (process.env.CLOUDINARY_URL || (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)) {
-  storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-      folder: 'pix30-leiloes',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
-      resource_type: 'auto'
+// Configure multer for file uploads (using local storage for reliability)
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const fs = require('fs');
+    const uploadDir = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
-  });
-} else {
-  storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      const fs = require('fs');
-      const uploadDir = path.join(__dirname, 'public', 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-  });
-}
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
 
 const upload = multer({ 
   storage: storage,
@@ -714,27 +710,40 @@ app.get('/api/admin/lances', async (req, res) => {
 app.post('/api/upload', upload.single('foto'), (req, res) => {
   try {
     console.log('Upload iniciado');
+    console.log('Headers:', req.headers['content-type']);
+    
     if (!req.file) {
       console.error('Nenhum arquivo enviado');
-      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+      return res.status(400).json({ success: false, error: 'Nenhum arquivo enviado' });
     }
     
-    console.log('Arquivo recebido:', req.file);
+    console.log('Arquivo recebido:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path,
+      filename: req.file.filename,
+      secure_url: req.file.secure_url
+    });
     
     let fotoUrl;
-    if (req.file.path) {
-      fotoUrl = req.file.path;
-    } else if (req.file.secure_url) {
+    if (req.file.secure_url) {
       fotoUrl = req.file.secure_url;
+      console.log('Usando URL do Cloudinary:', fotoUrl);
+    } else if (req.file.path) {
+      fotoUrl = req.file.path;
+      console.log('Usando caminho local:', fotoUrl);
     } else {
       fotoUrl = `/uploads/${req.file.filename}`;
+      console.log('Usando caminho relativo:', fotoUrl);
     }
     
-    console.log('URL gerada:', fotoUrl);
+    console.log('URL final:', fotoUrl);
     res.json({ success: true, fotoUrl: fotoUrl });
   } catch (error) {
     console.error('Erro no upload:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
