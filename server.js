@@ -15,6 +15,7 @@ const port = process.env.PORT || 3000;
 // Configure Cloudinary
 try {
   if (process.env.CLOUDINARY_URL) {
+    console.log('CLOUDINARY_URL encontrada:', process.env.CLOUDINARY_URL.substring(0, 20) + '...');
     cloudinary.config(process.env.CLOUDINARY_URL);
     console.log('Cloudinary configurado com URL');
   } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -25,7 +26,11 @@ try {
     });
     console.log('Cloudinary configurado com credenciais separadas');
   } else {
-    console.log('Cloudinary não configurado, usando upload local');
+    console.error('Cloudinary não configurado - variáveis de ambiente não encontradas');
+    console.error('CLOUDINARY_URL:', process.env.CLOUDINARY_URL ? 'presente' : 'ausente');
+    console.error('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME ? 'presente' : 'ausente');
+    console.error('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY ? 'presente' : 'ausente');
+    console.error('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET ? 'presente' : 'ausente');
   }
 } catch (error) {
   console.error('Erro ao configurar Cloudinary:', error);
@@ -41,14 +46,23 @@ const pool = new Pool({
 const pagbank = new PagBankService();
 
 // Configure multer for file uploads (Cloudinary only - no local fallback)
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'pix30-leiloes',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
-    resource_type: 'auto'
-  }
-});
+let storage;
+try {
+  console.log('Configurando CloudinaryStorage...');
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'pix30-leiloes',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
+      resource_type: 'auto'
+    }
+  });
+  console.log('CloudinaryStorage configurado com sucesso');
+} catch (error) {
+  console.error('Erro ao configurar CloudinaryStorage:', error);
+  console.error('Stack trace:', error.stack);
+  throw error;
+}
 
 const upload = multer({ 
   storage: storage,
