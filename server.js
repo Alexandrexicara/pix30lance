@@ -14,10 +14,7 @@ const port = process.env.PORT || 3000;
 
 // Configure Cloudinary
 if (process.env.CLOUDINARY_URL) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    url: process.env.CLOUDINARY_URL
-  });
+  cloudinary.config(process.env.CLOUDINARY_URL);
 } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
