@@ -37,7 +37,7 @@ const pagbank = new PagBankService();
 
 // Configure multer for file uploads (Cloudinary or fallback)
 let storage;
-if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+if (process.env.CLOUDINARY_URL || (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)) {
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
