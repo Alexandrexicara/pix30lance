@@ -286,7 +286,7 @@
         if (videoFile) {
           const formData = new FormData();
           formData.append('foto', videoFile);
-          const uploadResponse = await fetch(`${API_BASE}/upload-video`, { method: 'POST', body: formData });
+          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
           const uploadText = await uploadResponse.text();
           console.log('Upload video response:', uploadText);
           let uploadResult;
