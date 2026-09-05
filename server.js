@@ -227,10 +227,10 @@ app.post('/api/leiloes', async (req, res) => {
     data_fim.setDate(data_fim.getDate() + 30);
     
     const result = await pool.query(`
-      INSERT INTO leiloes (nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, video_url, valor_meta, data_inicio, data_fim)
+      INSERT INTO leiloes (nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, videoUrlFinal, valor_meta, data_inicio, data_fim)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
-    `, [nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, video_url, valor_meta, data_inicio, data_fim]);
+    `, [nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, videoUrlFinal, valor_meta, data_inicio, data_fim]);
     
     res.json(result.rows[0]);
   } catch (error) {
