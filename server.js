@@ -220,6 +220,7 @@ app.get('/api/leiloes/:id', async (req, res) => {
 app.post('/api/leiloes', async (req, res) => {
   try {
     const { nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, video_url: v, valor_meta, data_inicio } = req.body;
+  const videoUrlFinal = video_url || null;
     const video_url = v && v.trim() !== "" ? v : null;
     
     // Calculate end date (30 days from start)
