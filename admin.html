@@ -285,7 +285,7 @@
         // Upload video if file is selected
         if (videoFile) {
           const formData = new FormData();
-          formData.append('video', videoFile);
+          formData.append('foto', videoFile);
           const uploadResponse = await fetch(`${API_BASE}/upload-video`, { method: 'POST', body: formData });
           const uploadText = await uploadResponse.text();
           console.log('Upload video response:', uploadText);
@@ -297,7 +297,7 @@
             alert('Erro no upload de vídeo: resposta inválida do servidor');
             return;
           }
-          if (uploadResult.success) finalVideoUrl = uploadResult.videoUrl;
+          if (uploadResult.success) finalVideoUrl = uploadResult.fotoUrl;
           else {
             alert('Erro no upload de vídeo: ' + (uploadResult.error || 'Erro desconhecido'));
             return;
