@@ -307,7 +307,8 @@
         const response = await fetch(`${API_BASE}/leiloes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, foto_url_2: finalFotoUrl2, foto_url_3: finalFotoUrl3, foto_url_4: finalFotoUrl4, foto_url_5: finalFotoUrl5, video_url: finalVideoUrl, valor_meta, data_inicio })
+          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, foto_url_2: finalFotoUrl2, foto_url_3: finalFotoUrl3, foto_url_4: finalFotoUrl4, foto_url_5: finalFotoUrl5, ...(finalVideoUrl && { video_url: finalVideoUrl }), valor_meta, data_inicio })
+          
         });
         
         const result = await response.json();
