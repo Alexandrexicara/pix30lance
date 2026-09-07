@@ -68,9 +68,13 @@ class PagBankService {
       };
     } catch (error) {
       console.error('Erro ao gerar pagamento Pix:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.error_messages?.[0]?.description || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Erro desconhecido ao gerar pagamento Pix';
       return {
         success: false,
-        error: error.response?.data || error.message
+        error: errorMessage
       };
     }
   }

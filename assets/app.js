@@ -306,13 +306,6 @@ async function openAuction(auctionId) {
 async function handleBidSubmit(e) {
   e.preventDefault();
   
-  if (!currentUser) {
-    alert('Por favor, cadastre seus dados primeiro para participar do leilão.');
-    closeModal('auctionModal');
-    openMyBids();
-    return;
-  }
-  
   const bidAmount = parseFloat(document.getElementById('bidAmount').value);
   
   if (isNaN(bidAmount) || bidAmount <= 0) {
@@ -322,6 +315,15 @@ async function handleBidSubmit(e) {
   
   if (bidAmount < 0.01) {
     alert('O valor mínimo do lance é R$ 0,01.');
+    return;
+  }
+  
+  // Se usuário não estiver cadastrado, pede cadastro
+  if (!currentUser) {
+    // Abre modal de cadastro com valor do lance salvo
+    document.getElementById('pendingBidAmount').value = bidAmount;
+    closeModal('auctionModal');
+    openRegistrationWithBid(bidAmount);
     return;
   }
   
@@ -499,12 +501,53 @@ async function confirmPixPayment() {
 
 // Open my bids modal
 function openMyBids() {
+  // Reset modal title and button for normal use
+  const modalTitle = document.getElementById('myBidsModalTitle');
+  if (modalTitle) {
+    modalTitle.textContent = 'Meus Lances e Participações';
+  }
+  
+  const submitBtn = document.getElementById('userFormSubmit');
+  if (submitBtn) {
+    submitBtn.textContent = 'Ver meus lances';
+  }
+  
   document.getElementById('myBidsModal').classList.add('show');
   document.getElementById('overlay').classList.add('show');
   
   if (currentUser) {
     loadMyBids();
   }
+}
+
+// Open registration modal with pending bid
+function openRegistrationWithBid(bidAmount) {
+  // Set pending bid amount
+  if (!document.getElementById('pendingBidAmount')) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.id = 'pendingBidAmount';
+    input.value = bidAmount;
+    document.body.appendChild(input);
+  } else {
+    document.getElementById('pendingBidAmount').value = bidAmount;
+  }
+  
+  // Change modal title to indicate registration
+  const modalTitle = document.getElementById('myBidsModalTitle');
+  if (modalTitle) {
+    modalTitle.textContent = 'Cadastre-se para continuar';
+  }
+  
+  // Change button text
+  const submitBtn = document.getElementById('userFormSubmit');
+  if (submitBtn) {
+    submitBtn.textContent = 'Cadastrar e continuar';
+  }
+  
+  // Show user form
+  document.getElementById('myBidsModal').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
 }
 
 // Load user's bids
@@ -587,7 +630,41 @@ async function handleUserSubmit(e) {
     currentUser = user;
     localStorage.setItem('pix30-user', JSON.stringify(user));
     
-    loadMyBids();
+    // Check if there's a pending bid
+    const pendingBidInput = document.getElementById('pendingBidAmount');
+    const pendingBidAmount = pendingBidInput?.value;
+    
+    if (pendingBidAmount && currentAuctionId) {
+      // Remove pending bid input
+      if (pendingBidInput) {
+        pendingBidInput.remove();
+      }
+      
+      // Close registration modal
+      closeModal('myBidsModal');
+      
+      // Show loading message
+      alert('✅ Cadastro realizado! Agora vamos processar seu lance...');
+      
+      // Reopen auction modal and submit the bid
+      openAuction(currentAuctionId);
+      
+      // Wait a moment for the modal to load, then submit the bid
+      setTimeout(() => {
+        const bidInput = document.getElementById('bidAmount');
+        if (bidInput) {
+          bidInput.value = pendingBidAmount;
+          // Auto-submit the form
+          const bidForm = document.getElementById('bidForm');
+          if (bidForm) {
+            handleBidSubmit({ preventDefault: () => {} });
+          }
+        }
+      }, 500);
+    } else {
+      // Just load bids if no pending bid
+      loadMyBids();
+    }
   } catch (error) {
     console.error('Erro ao cadastrar usuário:', error);
     alert('Erro ao cadastrar. Tente novamente.');
