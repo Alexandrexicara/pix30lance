@@ -756,9 +756,6 @@ app.delete('/api/admin/leiloes/:id', async (req, res) => {
     client.release();
   }
 });
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Admin: Get all bids
 app.get('/api/admin/lances', async (req, res) => {
