@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = "/api"; // CORRIGIDO: Debug de erro adicionado
 let currentUser = JSON.parse(localStorage.getItem('pix30-user') || 'null');
 let currentAuctionId = null;
 let currentBidId = null;
