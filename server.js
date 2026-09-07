@@ -53,8 +53,8 @@ try {
     cloudinary: cloudinary,
     params: {
       folder: 'pix30-leiloes',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg', 'mov'],
-      resource_type: 'auto'
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      resource_type: 'image'
     }
   });
   console.log('CloudinaryStorage configurado com sucesso');
@@ -66,19 +66,16 @@ try {
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for videos
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for images
   fileFilter: function (req, file, cb) {
     const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
-    const allowedVideoTypes = /mp4|webm|ogg|mov/;
-    const extname = allowedImageTypes.test(path.extname(file.originalname).toLowerCase()) || 
-                   allowedVideoTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedImageTypes.test(file.mimetype) || 
-                   allowedVideoTypes.test(file.mimetype);
+    const extname = allowedImageTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedImageTypes.test(file.mimetype);
     
     if (extname && mimetype) {
       return cb(null, true);
     } else {
-      cb(new Error('Apenas imagens (jpeg, jpg, png, gif, webp) ou vídeos (mp4, webm, ogg, mov) são permitidos'));
+      cb(new Error('Apenas imagens (jpeg, jpg, png, gif, webp) são permitidas'));
     }
   }
 });
@@ -113,7 +110,6 @@ async function initDatabase() {
         foto_url_3 VARCHAR(500),
         foto_url_4 VARCHAR(500),
         foto_url_5 VARCHAR(500),
-        video_url VARCHAR(500),
         valor_meta DECIMAL(10,2) NOT NULL,
         valor_arrecadado DECIMAL(10,2) DEFAULT 0,
         data_inicio TIMESTAMP NOT NULL,
@@ -219,19 +215,17 @@ app.get('/api/leiloes/:id', async (req, res) => {
 // Create new auction (admin)
 app.post('/api/leiloes', async (req, res) => {
   try {
-    const { nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, video_url: v, valor_meta, data_inicio } = req.body;
-  const videoUrlFinal = video_url || null;
-    const video_url = v && v.trim() !== "" ? v : null;
+    const { nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, valor_meta, data_inicio } = req.body;
     
     // Calculate end date (30 days from start)
     const data_fim = new Date(data_inicio);
     data_fim.setDate(data_fim.getDate() + 30);
     
     const result = await pool.query(`
-      INSERT INTO leiloes (nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, videoUrlFinal, valor_meta, data_inicio, data_fim)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      INSERT INTO leiloes (nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, valor_meta, data_inicio, data_fim)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
-    `, [nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, videoUrlFinal, valor_meta, data_inicio, data_fim]);
+    `, [nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, valor_meta, data_inicio, data_fim]);
     
     res.json(result.rows[0]);
   } catch (error) {
@@ -754,29 +748,6 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
     console.error('Erro no upload:', error);
     console.error('Stack trace:', error.stack);
     res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Upload product video
-app.post('/api/upload-video', upload.single('video'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-    }
-    
-    let videoUrl;
-    if (req.file.path) {
-      videoUrl = req.file.path;
-    } else if (req.file.secure_url) {
-      videoUrl = req.file.secure_url;
-    } else {
-      videoUrl = `/uploads/${req.file.filename}`;
-    }
-    
-    res.json({ success: true, videoUrl: videoUrl });
-  } catch (error) {
-    console.error('Erro no upload de vídeo:', error);
-    res.status(500).json({ error: error.message });
   }
 });
 

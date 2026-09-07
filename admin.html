@@ -69,13 +69,6 @@
             <label>URL da foto 5 (opcional)
               <input type="url" id="auctionPhoto5" placeholder="https://...">
             </label>
-            <label>Vídeo do produto (opcional)
-              <input type="file" id="auctionVideoFile" accept="video/mp4,video/webm,video/ogg,video/quicktime">
-              <small>Ou cole a URL abaixo</small>
-            </label>
-            <label>URL do vídeo (opcional)
-              <input type="url" id="auctionVideo" placeholder="https://...">
-            </label>
             <label>Valor meta (R$)
               <input type="number" step="0.01" min="0.01" id="auctionMeta" required placeholder="Ex: 5000.00">
             </label>
@@ -167,8 +160,6 @@
       const foto_url_4 = document.getElementById('auctionPhoto4').value;
       const fotoFile5 = document.getElementById('auctionPhoto5File').files[0];
       const foto_url_5 = document.getElementById('auctionPhoto5').value;
-      const videoFile = document.getElementById('auctionVideoFile').files[0];
-      const video_url = document.getElementById('auctionVideo').value;
       const valor_meta = parseFloat(document.getElementById('auctionMeta').value);
       const data_inicio = document.getElementById('auctionStart').value;
       
@@ -177,7 +168,6 @@
       let finalFotoUrl3 = foto_url_3;
       let finalFotoUrl4 = foto_url_4;
       let finalFotoUrl5 = foto_url_5;
-      let finalVideoUrl = video_url;
       
       try {
         // Upload photos if files are selected
@@ -282,32 +272,10 @@
           }
         }
         
-        // Upload video if file is selected
-        if (videoFile) {
-          const formData = new FormData();
-          formData.append('foto', videoFile);
-          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadText = await uploadResponse.text();
-          console.log('Upload video response:', uploadText);
-          let uploadResult;
-          try {
-            uploadResult = JSON.parse(uploadText);
-          } catch (e) {
-            console.error('Resposta não é JSON:', uploadText);
-            alert('Erro no upload de vídeo: resposta inválida do servidor');
-            return;
-          }
-          if (uploadResult.success) finalVideoUrl = uploadResult.fotoUrl;
-          else {
-            alert('Erro no upload de vídeo: ' + (uploadResult.error || 'Erro desconhecido'));
-            return;
-          }
-        }
-        
         const response = await fetch(`${API_BASE}/leiloes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, foto_url_2: finalFotoUrl2, foto_url_3: finalFotoUrl3, foto_url_4: finalFotoUrl4, foto_url_5: finalFotoUrl5, ...(finalVideoUrl && { video_url: finalVideoUrl }), valor_meta, data_inicio })
+          body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, foto_url_2: finalFotoUrl2, foto_url_3: finalFotoUrl3, foto_url_4: finalFotoUrl4, foto_url_5: finalFotoUrl5, valor_meta, data_inicio })
           
         });
         
