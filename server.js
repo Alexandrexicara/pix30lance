@@ -119,6 +119,17 @@ async function initDatabase() {
       )
     `);
 
+    // Add missing columns if they don't exist (for existing tables)
+    try {
+      await pool.query(`ALTER TABLE leiloes ADD COLUMN IF NOT EXISTS foto_url_2 VARCHAR(500)`);
+      await pool.query(`ALTER TABLE leiloes ADD COLUMN IF NOT EXISTS foto_url_3 VARCHAR(500)`);
+      await pool.query(`ALTER TABLE leiloes ADD COLUMN IF NOT EXISTS foto_url_4 VARCHAR(500)`);
+      await pool.query(`ALTER TABLE leiloes ADD COLUMN IF NOT EXISTS foto_url_5 VARCHAR(500)`);
+      console.log('✓ Colunas adicionadas à tabela leiloes');
+    } catch (error) {
+      console.log('Nota: Colunas podem já existir ou erro ao adicionar:', error.message);
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lances (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
