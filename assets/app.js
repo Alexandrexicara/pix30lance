@@ -159,10 +159,6 @@ async function loadAuctions() {
                 <strong>${money(a.valor_meta)}</strong>
               </div>
               <div class="stat">
-                <span>Arrecadado</span>
-                <strong>${money(a.arrecadado_real)}</strong>
-              </div>
-              <div class="stat">
                 <span>Participantes</span>
                 <strong>${a.participantes || 0}</strong>
               </div>
@@ -244,10 +240,6 @@ async function openAuction(auctionId) {
             <div class="stat">
               <span>Meta do leilão</span>
               <strong>${money(auction.valor_meta)}</strong>
-            </div>
-            <div class="stat">
-              <span>Arrecadado</span>
-              <strong>${money(auction.arrecadado_real)}</strong>
             </div>
             <div class="stat">
               <span>Participantes</span>

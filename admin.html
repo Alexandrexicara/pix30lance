@@ -276,6 +276,12 @@
           }
         }
         
+        // Show loading message
+        const submitBtn = document.querySelector('#createAuctionForm button[type="submit"]');
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = '⏳ Aguarde, criando leilão...';
+        submitBtn.disabled = true;
+        
         const response = await fetch(`${API_BASE}/leiloes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -285,12 +291,16 @@
         
         const result = await response.json();
         
+        // Reset button
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+        
         if (result.error) {
           alert(result.error);
           return;
         }
         
-        alert(' Leilão criado com sucesso!');
+        alert('✅ Leilão criado com sucesso!');
         document.getElementById('createAuctionForm').reset();
         loadAdminAuctions();
       } catch (error) {

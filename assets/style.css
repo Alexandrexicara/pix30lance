@@ -40,7 +40,7 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 
 /* Auction Styles */
 .auction-card{cursor:pointer}
-.auction-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0;background:#0a1215;padding:12px;border-radius:10px;border:1px solid #1b292d}
+.auction-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0;background:#0a1215;padding:12px;border-radius:10px;border:1px solid #1b292d}
 .auction-stats .stat{display:flex;flex-direction:column;align-items:center}
 .auction-stats .stat span{font-size:11px;color:#899799;text-transform:uppercase}
 .auction-stats .stat strong{font-size:16px;color:#fff;margin-top:4px}
