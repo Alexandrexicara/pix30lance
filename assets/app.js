@@ -7,6 +7,79 @@ let currentBidId = null;
 const money = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatDate = d => new Date(d).toLocaleDateString('pt-BR');
 
+// Carousel functions
+const carouselStates = {};
+
+function moveCarousel(auctionId, direction) {
+  if (!carouselStates[auctionId]) {
+    const container = document.querySelector(`[data-auction-id="${auctionId}"]`);
+    const slides = container.querySelectorAll('.carousel-slide');
+    carouselStates[auctionId] = { currentIndex: 0, totalSlides: slides.length };
+  }
+  
+  const state = carouselStates[auctionId];
+  state.currentIndex = (state.currentIndex + direction + state.totalSlides) % state.totalSlides;
+  updateCarousel(auctionId);
+}
+
+function goToSlide(auctionId, index) {
+  if (!carouselStates[auctionId]) {
+    const container = document.querySelector(`[data-auction-id="${auctionId}"]`);
+    const slides = container.querySelectorAll('.carousel-slide');
+    carouselStates[auctionId] = { currentIndex: 0, totalSlides: slides.length };
+  }
+  
+  carouselStates[auctionId].currentIndex = index;
+  updateCarousel(auctionId);
+}
+
+function updateCarousel(auctionId) {
+  const container = document.querySelector(`[data-auction-id="${auctionId}"]`);
+  if (!container) return;
+  
+  const state = carouselStates[auctionId];
+  const slides = container.querySelectorAll('.carousel-slide');
+  const indicators = container.querySelectorAll('.indicator');
+  
+  slides.forEach((slide, index) => {
+    slide.classList.toggle('active', index === state.currentIndex);
+  });
+  
+  indicators.forEach((indicator, index) => {
+    indicator.classList.toggle('active', index === state.currentIndex);
+  });
+}
+
+// Auto-advance carousel every 3 seconds
+function startCarouselAutoAdvance(auctionId) {
+  if (carouselStates[auctionId]?.interval) {
+    clearInterval(carouselStates[auctionId].interval);
+  }
+  
+  carouselStates[auctionId] = carouselStates[auctionId] || {};
+  carouselStates[auctionId].interval = setInterval(() => {
+    moveCarousel(auctionId, 1);
+  }, 3000);
+}
+
+// Initialize carousels after loading auctions
+function initCarousels() {
+  const containers = document.querySelectorAll('.carousel-container');
+  containers.forEach(container => {
+    const auctionId = container.dataset.auctionId;
+    const slides = container.querySelectorAll('.carousel-slide');
+    
+    if (slides.length > 1) {
+      carouselStates[auctionId] = { 
+        currentIndex: 0, 
+        totalSlides: slides.length,
+        interval: null
+      };
+      startCarouselAutoAdvance(auctionId);
+    }
+  });
+}
+
 // Countdown timer
 function updateCountdown(endDate, elementId) {
   const element = document.getElementById(elementId);
@@ -53,18 +126,27 @@ async function loadAuctions() {
       return `
         <article class="product auction-card" data-id="${a.id}">
           <div class="product-img">
-            ${a.video_url ? 
-              `<video src="${a.video_url}" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>` : 
-              (photos.length > 0 ? 
-                (photos.length > 1 ? 
-                  `<div class="photo-gallery">
-                    <img src="${photos[0]}" alt="${a.nome}">
-                    <div class="photo-count">${photos.length} fotos</div>
-                  </div>` : 
-                  `<img src="${photos[0]}" alt="${a.nome}">`
-                ) : 
-                '📱'
-              )
+            ${photos.length > 0 ? 
+              (photos.length > 1 ? 
+                `<div class="carousel-container" data-auction-id="${a.id}">
+                  <div class="carousel-slides">
+                    ${photos.map((photo, index) => `
+                      <div class="carousel-slide ${index === 0 ? 'active' : ''}">
+                        <img src="${photo}" alt="${a.nome} - Foto ${index + 1}">
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button class="carousel-btn prev" onclick="moveCarousel('${a.id}', -1)">❮</button>
+                  <button class="carousel-btn next" onclick="moveCarousel('${a.id}', 1)">❯</button>
+                  <div class="carousel-indicators">
+                    ${photos.map((_, index) => `
+                      <span class="indicator ${index === 0 ? 'active' : ''}" onclick="goToSlide('${a.id}', ${index})"></span>
+                    `).join('')}
+                  </div>
+                </div>` : 
+                `<img src="${photos[0]}" alt="${a.nome}">`
+              ) : 
+              '📱'
             }
           </div>
           <div class="product-body">
@@ -100,6 +182,9 @@ async function loadAuctions() {
     auctions.forEach(a => {
       updateCountdown(a.data_fim, `countdown-${a.id}`);
     });
+    
+    // Initialize carousels
+    initCarousels();
   } catch (error) {
     console.error('Erro ao carregar leilões:', error);
     document.getElementById('auctions').innerHTML = '<p class="error">Erro ao carregar leilões. Tente novamente mais tarde.</p>';
@@ -117,6 +202,8 @@ async function openAuction(auctionId) {
     const percentMeta = Math.min((auction.arrecadado_real / auction.valor_meta) * 100, 100).toFixed(1);
     
     const details = document.getElementById('auctionDetails');
+    const photos = [auction.foto_url, auction.foto_url_2, auction.foto_url_3, auction.foto_url_4, auction.foto_url_5].filter(url => url);
+    
     details.innerHTML = `
       <div class="auction-detail">
         <div class="auction-header">
@@ -126,23 +213,27 @@ async function openAuction(auctionId) {
         </div>
         
         <div class="auction-image">
-          ${auction.video_url ? 
-            `<video src="${auction.video_url}" controls autoplay muted loop></video>` : 
-            (() => {
-              const photos = [auction.foto_url, auction.foto_url_2, auction.foto_url_3, auction.foto_url_4, auction.foto_url_5].filter(url => url);
-              if (photos.length === 0) return '📱';
-              if (photos.length === 1) return `<img src="${photos[0]}" alt="${auction.nome}">`;
-              return `
-                <div class="photo-gallery-detail">
+          ${photos.length > 0 ? 
+            (photos.length > 1 ? 
+              `<div class="carousel-container detail-carousel" data-auction-id="${auction.id}-detail">
+                <div class="carousel-slides">
                   ${photos.map((photo, index) => `
-                    <img src="${photo}" alt="${auction.nome} - Foto ${index + 1}" class="${index === 0 ? 'active' : ''}">
+                    <div class="carousel-slide ${index === 0 ? 'active' : ''}">
+                      <img src="${photo}" alt="${auction.nome} - Foto ${index + 1}">
+                    </div>
                   `).join('')}
-                  <div class="photo-indicators">
-                    ${photos.map((_, index) => `<span class="${index === 0 ? 'active' : ''}"></span>`).join('')}
-                  </div>
                 </div>
-              `;
-            })()
+                <button class="carousel-btn prev" onclick="moveCarousel('${auction.id}-detail', -1)">❮</button>
+                <button class="carousel-btn next" onclick="moveCarousel('${auction.id}-detail', 1)">❯</button>
+                <div class="carousel-indicators">
+                  ${photos.map((_, index) => `
+                    <span class="indicator ${index === 0 ? 'active' : ''}" onclick="goToSlide('${auction.id}-detail', ${index})"></span>
+                  `).join('')}
+                </div>
+              </div>` : 
+              `<img src="${photos[0]}" alt="${auction.nome}">`
+            ) : 
+            '📱'
           }
         </div>
         
@@ -200,6 +291,18 @@ async function openAuction(auctionId) {
     
     updateCountdown(auction.data_fim, `countdown-${auction.id}`);
     
+    // Initialize detail carousel if exists
+    const detailCarousel = document.querySelector('.detail-carousel');
+    if (detailCarousel && photos.length > 1) {
+      const auctionId = `${auction.id}-detail`;
+      carouselStates[auctionId] = { 
+        currentIndex: 0, 
+        totalSlides: photos.length,
+        interval: null
+      };
+      startCarouselAutoAdvance(auctionId);
+    }
+    
     document.getElementById('bidForm').onsubmit = handleBidSubmit;
   } catch (error) {
     console.error('Erro ao carregar detalhes:', error);
@@ -212,7 +315,8 @@ async function handleBidSubmit(e) {
   e.preventDefault();
   
   if (!currentUser) {
-    alert('Por favor, cadastre seus dados primeiro.');
+    alert('Por favor, cadastre seus dados primeiro para participar do leilão.');
+    closeModal('auctionModal');
     openMyBids();
     return;
   }
@@ -220,7 +324,12 @@ async function handleBidSubmit(e) {
   const bidAmount = parseFloat(document.getElementById('bidAmount').value);
   
   if (isNaN(bidAmount) || bidAmount <= 0) {
-    alert('Por favor, informe um valor válido para o lance.');
+    alert('Por favor, informe um valor válido para o lance (maior que R$ 0,00).');
+    return;
+  }
+  
+  if (bidAmount < 0.01) {
+    alert('O valor mínimo do lance é R$ 0,01.');
     return;
   }
   

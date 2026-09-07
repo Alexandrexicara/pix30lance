@@ -701,6 +701,65 @@ app.get('/api/admin/leiloes', async (req, res) => {
   }
 });
 
+// Admin: Renew auction (extend end date by 30 days)
+app.post('/api/admin/leiloes/:id/renovar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(`
+      UPDATE leiloes 
+      SET data_fim = data_fim + INTERVAL '30 days',
+          status = 'ativo'
+      WHERE id = $1
+      RETURNING *
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Leilão não encontrado' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao renovar leilão:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin: Delete auction
+app.delete('/api/admin/leiloes/:id', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    
+    // Delete related records first
+    await client.query('DELETE FROM auditoria_lances WHERE lance_id IN (SELECT id FROM lances WHERE leilao_id = $1)', [id]);
+    await client.query('DELETE FROM resultados_leilao WHERE leilao_id = $1', [id]);
+    await client.query('DELETE FROM lances WHERE leilao_id = $1', [id]);
+    
+    // Delete the auction
+    const result = await client.query('DELETE FROM leiloes WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Leilão não encontrado' });
+    }
+    
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'Leilão deletado com sucesso' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao deletar leilão:', error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
+  }
+});
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Admin: Get all bids
 app.get('/api/admin/lances', async (req, res) => {
   try {
