@@ -329,6 +329,9 @@ app.post('/api/lances', async (req, res) => {
       throw new Error(`Erro ao gerar pagamento Pix: ${pixPayment.error}`);
     }
     
+    // If demo payment, mark it for immediate confirmation
+    const isDemo = pixPayment.demo || false;
+    
     // Update bid with PagBank data
     const updatedBid = await client.query(`
       UPDATE lances 
@@ -352,7 +355,8 @@ app.post('/api/lances', async (req, res) => {
       qrCodeImage: pixPayment.qrCodeImage,
       copyPasteCode: pixPayment.copyPasteCode,
       valor: valor,
-      expiresAt: pixPayment.expiresAt
+      expiresAt: pixPayment.expiresAt,
+      demo: isDemo
     });
   } catch (error) {
     await client.query('ROLLBACK');

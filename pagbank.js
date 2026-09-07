@@ -23,6 +23,12 @@ class PagBankService {
   // Generate QR Code for Pix payment
   async generatePixPayment(amount, description, referenceId) {
     try {
+      // Check if credentials are configured
+      if (!this.apiKey || !this.apiId) {
+        console.warn('Credenciais PagBank não configuradas, usando modo demonstração');
+        return this.generateDemoPayment(amount, description, referenceId);
+      }
+
       const payload = {
         amount: {
           value: amount.toFixed(2),
@@ -68,6 +74,13 @@ class PagBankService {
       };
     } catch (error) {
       console.error('Erro ao gerar pagamento Pix:', error.response?.data || error.message);
+      
+      // Se for erro de credenciais, usar modo demonstração
+      if (error.response?.status === 401 || error.message?.includes('credential')) {
+        console.warn('Erro de credenciais PagBank, usando modo demonstração');
+        return this.generateDemoPayment(amount, description, referenceId);
+      }
+      
       const errorMessage = error.response?.data?.error_messages?.[0]?.description || 
                           error.response?.data?.message || 
                           error.message || 
@@ -75,6 +88,32 @@ class PagBankService {
       return {
         success: false,
         error: errorMessage
+      };
+    }
+  }
+
+  // Generate demo payment for testing when PagBank is not configured
+  async generateDemoPayment(amount, description, referenceId) {
+    try {
+      // Generate a demo QR code
+      const demoPixString = `00020126580014BR.GOV.BCB.PIX0136${referenceId}5204000053039865404${amount.toFixed(2).replace('.', '')}5802BR5925PIX30_LEILAO_DEMONSTRACAO6009SAO_PAULO62070503***6304`;
+      const qrCodeImage = await QRCode.toDataURL(demoPixString);
+
+      return {
+        success: true,
+        orderId: `demo-${referenceId}-${Date.now()}`,
+        qrCodeString: demoPixString,
+        qrCodeImage: qrCodeImage,
+        copyPasteCode: demoPixString,
+        amount: amount,
+        expiresAt: new Date(Date.now() + 3600000).toISOString(),
+        demo: true // Flag to indicate this is a demo payment
+      };
+    } catch (error) {
+      console.error('Erro ao gerar pagamento demonstração:', error.message);
+      return {
+        success: false,
+        error: 'Erro ao gerar pagamento demonstração'
       };
     }
   }

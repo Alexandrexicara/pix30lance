@@ -351,10 +351,14 @@ async function handleBidSubmit(e) {
     const pixModal = document.getElementById('pixModal');
     const pixContent = pixModal.querySelector('.modal-box');
     
+    const isDemo = result.demo || false;
+    const demoWarning = isDemo ? `<p class="demo-warning">⚠️ <strong>MODO DEMONSTRAÇÃO:</strong> Pagamentos não são processados pelo PagBank. Use "Confirmar manualmente" para testar.</p>` : '';
+    
     pixContent.innerHTML = `
       <button class="modal-close" id="closePixModal">✕</button>
       <p class="eyebrow">PAGAMENTO PIX</p>
       <h2>Pague seu lance via Pix</h2>
+      ${demoWarning}
       <div class="qr-code-container">
         ${result.qrCodeImage ? `<img src="${result.qrCodeImage}" alt="QR Code Pix" class="qr-code-image">` : ''}
       </div>
@@ -363,7 +367,7 @@ async function handleBidSubmit(e) {
       <p class="warning">⚠️ Você NÃO está comprando o produto. Este é o valor do seu lance para participar do leilão.</p>
       <p class="expires">⏰ Expira em: ${new Date(result.expiresAt).toLocaleTimeString('pt-BR')}</p>
       <button class="btn primary full" id="copyPix">Copiar código Pix</button>
-      <button class="btn ghost full" id="checkPayment">Verificar pagamento</button>
+      ${!isDemo ? `<button class="btn ghost full" id="checkPayment">Verificar pagamento</button>` : ''}
       <button class="btn ghost full" id="confirmPix">Confirmar manualmente</button>
     `;
     
