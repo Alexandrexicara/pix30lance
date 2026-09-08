@@ -319,7 +319,7 @@ class PagBankService {
         `${this.baseUrl}/charges/${chargeId}`,
         {
           headers: this.getAuthHeaders(),
-          timeout: 30000
+          timeout: 60000
         }
       );
 
