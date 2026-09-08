@@ -266,7 +266,13 @@ app.post('/api/lances', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
+    console.log('=== POST /api/lances ===');
+    console.log('Body:', req.body);
+    console.log('BASE_URL:', process.env.BASE_URL);
+    console.log('PAGBANK_API_KEY:', process.env.PAGBANK_API_KEY ? 'configured' : 'NOT configured');
+    console.log('PAGBANK_SANDBOX:', process.env.PAGBANK_SANDBOX);
+
     const { leilao_id, usuario_id, valor } = req.body;
     
     // Check if auction is still active (only checks date, NOT meta percentage)
