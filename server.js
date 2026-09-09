@@ -325,11 +325,11 @@ app.post('/api/lances', async (req, res) => {
       lanceData = insertResult.rows[0];
     }
     
-    // Generate Pix payment with PagBank
+    // Generate Pix payment with Asaas
     const description = `Lance no leilão: ${leilao.rows[0].nome}`;
     const referenceId = `lance-${lanceId}`;
     
-    const pixPayment = await pagbank.generatePixPayment(valor, description, referenceId);
+    const pixPayment = await asaas.generatePixPayment(valor, description, referenceId);
     
     if (!pixPayment.success) {
       throw new Error(`Erro ao gerar pagamento Pix: ${pixPayment.error}`);
