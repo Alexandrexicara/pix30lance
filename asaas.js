@@ -33,9 +33,18 @@ class AsaasService {
       console.log('==========================================');
       console.log('💰 CRIANDO PIX ASAAS');
       console.log('Valor:', valor);
+      console.log('Descrição:', description);
       console.log('Referência:', referenceId);
       console.log('Sandbox:', this.isSandbox);
       console.log('==========================================');
+
+      if (!description || description.trim() === '') {
+        throw new Error('Descrição não pode ser vazia.');
+      }
+
+      if (!referenceId || referenceId.trim() === '') {
+        throw new Error('Referência não pode ser vazia.');
+      }
 
       // Criar cobrança no Asaas
       const payload = {
@@ -46,6 +55,8 @@ class AsaasService {
         dueDate: new Date(Date.now() + 60 * 60 * 1000).toISOString().split('T')[0], // 1 hora
         postalService: false
       };
+
+      console.log('Payload enviado:', JSON.stringify(payload, null, 2));
 
       const response = await axios.post(
         `${this.baseUrl}/payments`,
