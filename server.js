@@ -790,14 +790,15 @@ app.get('/api/admin/lances', async (req, res) => {
 // Upload product image
 app.post('/api/upload', upload.single('foto'), (req, res) => {
   try {
-    console.log('Upload iniciado');
+    console.log('=== UPLOAD INICIADO ===');
     console.log('Headers:', req.headers['content-type']);
-    
+    console.log('Cloudinary configurado:', !!cloudinary.config().cloud_name);
+
     if (!req.file) {
       console.error('Nenhum arquivo enviado');
       return res.status(400).json({ success: false, error: 'Nenhum arquivo enviado' });
     }
-    
+
     console.log('Arquivo recebido:', {
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
@@ -806,7 +807,7 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
       filename: req.file.filename,
       secure_url: req.file.secure_url
     });
-    
+
     let fotoUrl;
     if (req.file.secure_url) {
       fotoUrl = req.file.secure_url;
@@ -818,7 +819,7 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
       fotoUrl = `/uploads/${req.file.filename}`;
       console.log('Usando caminho relativo:', fotoUrl);
     }
-    
+
     console.log('URL final:', fotoUrl);
     res.json({ success: true, fotoUrl: fotoUrl });
   } catch (error) {
