@@ -3,7 +3,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
-const PagBankService = require('./pagbank');
+const AsaasService = require('./asaas');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
@@ -42,8 +42,8 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false
 });
 
-// Initialize PagBank service
-const pagbank = new PagBankService();
+// Initialize Asaas service
+const asaas = new AsaasService();
 
 // Configure multer for file uploads (Cloudinary only - no local fallback)
 let storage;
