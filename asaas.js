@@ -46,14 +46,33 @@ class AsaasService {
         throw new Error('Referência não pode ser vazia.');
       }
 
+      // Criar customer temporário para o pagamento
+      const customerPayload = {
+        name: 'Cliente Leilão',
+        email: `cliente-${referenceId}@temp.com`,
+        phone: '11999999999',
+        cpfCnpj: '00000000000'
+      };
+
+      const customerResponse = await axios.post(
+        `${this.baseUrl}/customers`,
+        customerPayload,
+        {
+          headers: this.getAuthHeaders(),
+          timeout: 60000
+        }
+      );
+
+      const customerId = customerResponse.data.id;
+
       // Criar cobrança no Asaas
       const payload = {
         billingType: 'PIX',
+        customer: customerId,
         value: valor,
         description: description,
         externalReference: referenceId,
-        dueDate: new Date(Date.now() + 60 * 60 * 1000).toISOString().split('T')[0], // 1 hora
-        postalService: false
+        dueDate: new Date(Date.now() + 60 * 60 * 1000).toISOString().split('T')[0]
       };
 
       console.log('Payload enviado:', JSON.stringify(payload, null, 2));
