@@ -53,6 +53,16 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 .bids-table .status.cancelado{background:#ff6d6d;color:#fff}
 .total-bids{color:#899799;font-size:13px;margin-top:10px;text-align:right}
 
+/* Notification Styles */
+.notification-item{background:#0a1215;padding:15px;border-radius:10px;border:1px solid #1b292d;margin-bottom:15px}
+.notification-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.notification-date{color:#899799;font-size:12px}
+.notification-details p{margin:5px 0;color:#f5f7f7;font-size:13px}
+.notification-actions{display:flex;gap:10px;margin-top:10px}
+.notification-actions .btn.small{padding:8px 12px;font-size:12px}
+.notification-actions .btn.primary{background:#39ff88;color:#031009}
+.notification-actions .btn.ghost{background:#0d1518;border:1px solid #2b3b3f;color:#fff}
+
 /* Auction Styles */
 .auction-card{cursor:pointer}
 .auction-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0;background:#0a1215;padding:12px;border-radius:10px;border:1px solid #1b292d}

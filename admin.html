@@ -98,6 +98,17 @@
             <p class="loading">Carregando lances...</p>
           </div>
         </div>
+
+        <!-- Notificações de Vencedores -->
+        <div class="admin-section">
+          <h3>Notificações de Vencedores</h3>
+          <div class="quick-actions">
+            <button class="btn ghost" onclick="loadWinnerNotifications()">Carregar notificações</button>
+          </div>
+          <div id="notificationsContainer">
+            <p class="loading">Carregando notificações...</p>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -440,6 +451,45 @@
       }
     }
 
+    // Load winner notifications
+    async function loadWinnerNotifications() {
+      try {
+        const response = await fetch(`${API_BASE}/admin/notificacoes-vencedores`);
+        const notifications = await response.json();
+
+        const container = document.getElementById('notificationsContainer');
+
+        if (notifications.length === 0) {
+          container.innerHTML = '<p class="no-auctions">Nenhuma notificação de vencedor encontrada.</p>';
+          return;
+        }
+
+        container.innerHTML = notifications.map(n => {
+          const details = typeof n.detalhes === 'string' ? JSON.parse(n.detalhes) : n.detalhes;
+
+          return `
+            <div class="notification-item">
+              <div class="notification-header">
+                <strong>🏆 ${details.winner} venceu o leilão "${n.leilao_nome}"</strong>
+                <span class="notification-date">${new Date(n.criado_em).toLocaleString('pt-BR')}</span>
+              </div>
+              <div class="notification-details">
+                <p>Lance vencedor: R$ ${n.lance_valor?.toFixed(2) || 'N/A'}</p>
+                <p>Prêmio: ${details.prizeInfo || 'N/A'}</p>
+                <div class="notification-actions">
+                  <a href="${details.winnerWhatsAppLink}" target="_blank" class="btn primary small">Enviar WhatsApp para Vencedor</a>
+                  <a href="${details.adminWhatsAppLink}" target="_blank" class="btn ghost small">Abrir WhatsApp Admin</a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Erro ao carregar notificações:', error);
+        document.getElementById('notificationsContainer').innerHTML = '<p class="error">Erro ao carregar notificações. Tente novamente.</p>';
+      }
+    }
+
     // Set default start date to now
     document.getElementById('auctionStart').value = new Date().toISOString().slice(0, 16);
 
@@ -449,6 +499,7 @@
     // Initialize
     loadAdminAuctions();
     showAllBids();
+    loadWinnerNotifications();
   </script>
 </body>
 </html>

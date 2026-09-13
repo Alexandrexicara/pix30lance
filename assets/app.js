@@ -326,6 +326,15 @@ async function handleBidSubmit(e) {
     openRegistrationWithBid(bidAmount);
     return;
   }
+
+  // Verificar se usuário tem CPF/CNPJ cadastrado
+  if (!currentUser.cpf_cnpj) {
+    alert('⚠️ Você precisa completar seu cadastro com CPF/CNPJ antes de dar lance.');
+    document.getElementById('pendingBidAmount').value = bidAmount;
+    closeModal('auctionModal');
+    openRegistrationWithBid(bidAmount);
+    return;
+  }
   
   try {
     const response = await fetch(`${API_BASE}/lances`, {

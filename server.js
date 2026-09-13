@@ -4,7 +4,6 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const AsaasService = require('./asaas');
-const WhatsAppService = require('./whatsapp');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
@@ -46,8 +45,13 @@ const pool = new Pool({
 // Initialize Asaas service
 const asaas = new AsaasService();
 
-// Initialize WhatsApp service
-const whatsapp = new WhatsAppService();
+// Sistema de notificações via WhatsApp link (wa.me)
+function generateWhatsAppLink(phone, message) {
+  const cleanPhone = phone.replace(/\D/g, '');
+  const formattedPhone = cleanPhone.length === 11 ? `55${cleanPhone}` : cleanPhone;
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+}
 
 // Configure multer for file uploads (Cloudinary only - no local fallback)
 let storage;
@@ -690,6 +694,35 @@ app.get('/api/admin/leiloes/:id/lances', async (req, res) => {
   }
 });
 
+// Admin: Get winner notifications
+app.get('/api/admin/notificacoes-vencedores', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        a.id,
+        a.lance_id,
+        a.acao,
+        a.detalhes,
+        a.criado_em,
+        l.valor as lance_valor,
+        l.leilao_id,
+        u.nome as usuario_nome,
+        u.telefone as usuario_telefone,
+        leil.nome as leilao_nome
+      FROM auditoria_lances a
+      JOIN lances l ON a.lance_id = l.id
+      JOIN usuarios u ON l.usuario_id = u.id
+      JOIN leiloes leil ON l.leilao_id = leil.id
+      WHERE a.acao = 'vencedor_notificado'
+      ORDER BY a.criado_em DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Calculate auction winner (runs when auction ends)
 app.post('/api/leiloes/:id/calcular-vencedor', async (req, res) => {
   const client = await pool.connect();
@@ -766,7 +799,7 @@ app.post('/api/leiloes/:id/calcular-vencedor', async (req, res) => {
       RETURNING *
     `, [id, vencedor, lanceVencedorId, menorLanceUnico, valorFinal, metaAtingida]);
 
-    // Send WhatsApp notifications if there's a winner
+    // Send WhatsApp notifications if there's a winner (via wa.me links)
     if (vencedor && menorLanceUnico !== null) {
       try {
         // Get winner details
@@ -777,19 +810,55 @@ app.post('/api/leiloes/:id/calcular-vencedor', async (req, res) => {
 
         if (winnerDetails.rows.length > 0) {
           const winner = winnerDetails.rows[0];
-          const auction = { nome: auctionName };
-          const winningBid = { valor: menorLanceUnico };
 
-          // Notify winner
-          await whatsapp.notifyWinner(winner, auction, winningBid, prizeInfo);
+          // Generate WhatsApp message for winner
+          const winnerMessage = `
+🏆 PARABÉNS! VOCÊ VENCEU O LEILÃO!
 
-          // Notify admin
-          await whatsapp.notifyAdmin(auction, winner, winningBid, prizeInfo);
+📦 Produto: ${auctionName}
+💰 Seu lance vencedor: R$ ${menorLanceUnico.toFixed(2)}
+🎯 Prêmio: ${prizeInfo}
 
-          console.log('📱 Notificações WhatsApp enviadas para o vencedor e admin');
+Obrigado por participar do PIX30!
+          `.trim();
+
+          const winnerWhatsAppLink = generateWhatsAppLink(winner.telefone, winnerMessage);
+
+          // Generate WhatsApp message for admin
+          const adminPhone = process.env.ADMIN_WHATSAPP_PHONE || '5511999999999';
+          const adminMessage = `
+📊 LEILÃO FINALIZADO - NOVO VENCEDOR
+
+📦 Produto: ${auctionName}
+👤 Vencedor: ${winner.nome} (${winner.email})
+📱 Telefone: ${winner.telefone}
+💰 Lance vencedor: R$ ${menorLanceUnico.toFixed(2)}
+🎯 Prêmio: ${prizeInfo}
+📊 Meta atingida: ${prizeInfo.includes('produto') ? 'SIM' : 'NÃO (70% do arrecadado)'}
+
+Verifique no painel administrativo para mais detalhes.
+          `.trim();
+
+          const adminWhatsAppLink = generateWhatsAppLink(adminPhone, adminMessage);
+
+          // Store notification in database
+          await client.query(`
+            INSERT INTO auditoria_lances (lance_id, acao, detalhes)
+            VALUES ($1, 'vencedor_notificado', $2)
+          `, [lanceVencedorId, JSON.stringify({
+            winner: winner.nome,
+            winnerPhone: winner.telefone,
+            winnerWhatsAppLink: winnerWhatsAppLink,
+            adminWhatsAppLink: adminWhatsAppLink,
+            prizeInfo: prizeInfo
+          })]);
+
+          console.log('📱 Links WhatsApp gerados para o vencedor e admin');
+          console.log('📱 Link para vencedor:', winnerWhatsAppLink);
+          console.log('📱 Link para admin:', adminWhatsAppLink);
         }
       } catch (whatsappError) {
-        console.error('Erro ao enviar notificações WhatsApp:', whatsappError.message);
+        console.error('Erro ao gerar links WhatsApp:', whatsappError.message);
         // Don't fail the whole process if WhatsApp fails
       }
     }
