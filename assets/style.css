@@ -41,6 +41,18 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 .carousel-indicators .indicator:hover{background:rgba(255,255,255,0.7)}
 .carousel-indicators .indicator.active{background:#39ff88;transform:scale(1.3)}
 
+/* Bids Table Styles */
+.bids-table{width:100%;border-collapse:collapse;margin:20px 0;background:#0a1215;border-radius:10px;overflow:hidden}
+.bids-table thead{background:#1b292d}
+.bids-table th{padding:12px;text-align:left;color:#39ff88;font-weight:bold;font-size:12px;text-transform:uppercase}
+.bids-table td{padding:12px;border-bottom:1px solid #1b292d;color:#f5f7f7;font-size:13px}
+.bids-table tbody tr:hover{background:#0d1518}
+.bids-table .status{padding:4px 8px;border-radius:4px;font-size:11px;font-weight:bold;text-transform:uppercase}
+.bids-table .status.pendente{background:#ffaa00;color:#031009}
+.bids-table .status.confirmado{background:#39ff88;color:#031009}
+.bids-table .status.cancelado{background:#ff6d6d;color:#fff}
+.total-bids{color:#899799;font-size:13px;margin-top:10px;text-align:right}
+
 /* Auction Styles */
 .auction-card{cursor:pointer}
 .auction-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0;background:#0a1215;padding:12px;border-radius:10px;border:1px solid #1b292d}

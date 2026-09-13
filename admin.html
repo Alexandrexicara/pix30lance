@@ -89,10 +89,13 @@
 
         <!-- Lances Recentes -->
         <div class="admin-section">
-          <h3>Ações Rápidas</h3>
+          <h3>Todos os Lances</h3>
           <div class="quick-actions">
             <button class="btn ghost" onclick="loadAdminAuctions()">Atualizar lista</button>
             <button class="btn ghost" onclick="showAllBids()">Ver todos os lances</button>
+          </div>
+          <div id="allBidsContainer">
+            <p class="loading">Carregando lances...</p>
           </div>
         </div>
       </div>
@@ -340,21 +343,48 @@
       try {
         const response = await fetch(`${API_BASE}/admin/lances`);
         const bids = await response.json();
-        
+
+        const container = document.getElementById('allBidsContainer');
+
         if (bids.length === 0) {
-          alert('Nenhum lance encontrado.');
+          container.innerHTML = '<p class="no-auctions">Nenhum lance encontrado.</p>';
           return;
         }
-        
-        let message = 'Lances cadastrados:\n\n';
-        bids.forEach((bid, index) => {
-          message += `${index + 1}. ${bid.nome} - R$ ${bid.valor?.toFixed(2) || 'N/A'} - ${bid.status}\n`;
-        });
-        
-        alert(message);
+
+        container.innerHTML = `
+          <table class="bids-table">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Email</th>
+                <th>Telefone</th>
+                <th>CPF/CNPJ</th>
+                <th>Leilão</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bids.map(bid => `
+                <tr>
+                  <td>${bid.usuario_nome}</td>
+                  <td>${bid.usuario_email}</td>
+                  <td>${bid.usuario_telefone || '-'}</td>
+                  <td>${bid.usuario_cpf_cnpj || '-'}</td>
+                  <td>${bid.leilao_nome}</td>
+                  <td>R$ ${bid.valor?.toFixed(2) || 'N/A'}</td>
+                  <td><span class="status ${bid.status_pix}">${bid.status_pix}</span></td>
+                  <td>${new Date(bid.criado_em).toLocaleString('pt-BR')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <p class="total-bids">Total: ${bids.length} lances</p>
+        `;
       } catch (error) {
         console.error('Erro ao carregar lances:', error);
-        alert('Erro ao carregar lances. Tente novamente.');
+        document.getElementById('allBidsContainer').innerHTML = '<p class="error">Erro ao carregar lances. Tente novamente.</p>';
       }
     }
 
@@ -412,12 +442,13 @@
 
     // Set default start date to now
     document.getElementById('auctionStart').value = new Date().toISOString().slice(0, 16);
-    
+
     // Event listeners
     document.getElementById('createAuctionForm').onsubmit = createAuction;
-    
+
     // Initialize
     loadAdminAuctions();
+    showAllBids();
   </script>
 </body>
 </html>

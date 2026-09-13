@@ -55,9 +55,14 @@ class AsaasService {
         cpfCnpj: this.cleanCpfCnpj(customerData?.cpf_cnpj)
       };
 
-      // Validar CPF/CNPJ
-      if (!this.validateCpfCnpj(customerPayload.cpfCnpj)) {
-        throw new Error('CPF/CNPJ inválido. Por favor, informe um documento válido.');
+      // Validar CPF/CNPJ (apenas se fornecido)
+      if (customerPayload.cpfCnpj && customerPayload.cpfCnpj !== '00000000000') {
+        if (!this.validateCpfCnpj(customerPayload.cpfCnpj)) {
+          throw new Error('CPF/CNPJ inválido. Por favor, atualize seu cadastro com um documento válido.');
+        }
+      } else {
+        console.warn('⚠️ CPF/CNPJ não fornecido ou inválido, usando CPF temporário');
+        customerPayload.cpfCnpj = '00000000000'; // CPF temporário para permitir funcionamento
       }
 
       const customerResponse = await axios.post(

@@ -596,6 +596,7 @@ async function loadMyBids() {
           </div>
         `).join('')}
       </div>
+      <p class="total-bids">Total de lances: ${bids.length}</p>
     `;
     
     // Start countdowns for active auctions

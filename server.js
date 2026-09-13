@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const AsaasService = require('./asaas');
+const WhatsAppService = require('./whatsapp');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
@@ -45,33 +46,76 @@ const pool = new Pool({
 // Initialize Asaas service
 const asaas = new AsaasService();
 
+// Initialize WhatsApp service
+const whatsapp = new WhatsAppService();
+
 // Configure multer for file uploads (Cloudinary only - no local fallback)
 let storage;
 try {
-  console.log('Configurando CloudinaryStorage...');
-  storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-      folder: 'pix30-leiloes',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-      resource_type: 'image'
+  if (process.env.CLOUDINARY_URL || (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)) {
+    console.log('Configurando CloudinaryStorage...');
+    storage = new CloudinaryStorage({
+      cloudinary: cloudinary,
+      params: {
+        folder: 'pix30-leiloes',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+        resource_type: 'image'
+      }
+    });
+    console.log('CloudinaryStorage configurado com sucesso');
+  } else {
+    console.log('Cloudinary não configurado, usando storage local');
+    const fs = require('fs');
+    const path = require('path');
+
+    // Criar diretório de uploads se não existir
+    const uploadDir = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+      }
+    });
+  }
+} catch (error) {
+  console.error('Erro ao configurar storage:', error);
+  console.error('Usando storage local como fallback');
+
+  const fs = require('fs');
+  const path = require('path');
+
+  // Criar diretório de uploads se não existir
+  const uploadDir = path.join(__dirname, 'public', 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
     }
   });
-  console.log('CloudinaryStorage configurado com sucesso');
-} catch (error) {
-  console.error('Erro ao configurar CloudinaryStorage:', error);
-  console.error('Stack trace:', error.stack);
-  throw error;
 }
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for images
   fileFilter: function (req, file, cb) {
     const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedImageTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedImageTypes.test(file.mimetype);
-    
+
     if (extname && mimetype) {
       return cb(null, true);
     } else {
@@ -138,6 +182,16 @@ async function initDatabase() {
       console.log('Nota: Coluna cpf_cnpj pode já existir ou erro ao adicionar:', error.message);
     }
 
+    // Remover restrição UNIQUE para permitir múltiplos lances por usuário
+    try {
+      await pool.query(`
+        ALTER TABLE lances DROP CONSTRAINT IF EXISTS lances_leilao_id_usuario_id_key
+      `);
+      console.log('✓ Restrição UNIQUE removida da tabela lances - múltiplos lances permitidos');
+    } catch (error) {
+      console.log('Nota: Restrição pode não existir ou erro ao remover:', error.message);
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lances (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -150,8 +204,7 @@ async function initDatabase() {
         qr_code_string TEXT,
         qr_code_image TEXT,
         copy_paste_code TEXT,
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(leilao_id, usuario_id)
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -301,37 +354,15 @@ app.post('/api/lances', async (req, res) => {
     if (new Date() > new Date(leilao.rows[0].data_fim)) {
       throw new Error('Leilão já encerrado após 30 dias');
     }
-    
-    // Check if user already has a bid for this auction
-    const existingBid = await client.query(
-      'SELECT id FROM lances WHERE leilao_id = $1 AND usuario_id = $2',
-      [leilao_id, usuario_id]
-    );
-    
-    let lanceId;
-    let lanceData;
-    
-    if (existingBid.rows.length > 0) {
-      // Update existing bid
-      const updateResult = await client.query(`
-        UPDATE lances 
-        SET valor = $3, status_pix = 'pendente', pix_confirmado_em = NULL, 
-            pagbank_order_id = NULL, qr_code_string = NULL, qr_code_image = NULL, copy_paste_code = NULL
-        WHERE id = $1
-        RETURNING *
-      `, [existingBid.rows[0].id, leilao_id, valor]);
-      lanceId = updateResult.rows[0].id;
-      lanceData = updateResult.rows[0];
-    } else {
-      // Create new bid
-      const insertResult = await client.query(`
-        INSERT INTO lances (leilao_id, usuario_id, valor)
-        VALUES ($1, $2, $3)
-        RETURNING *
-      `, [leilao_id, usuario_id, valor]);
-      lanceId = insertResult.rows[0].id;
-      lanceData = insertResult.rows[0];
-    }
+
+    // Create new bid (allow multiple bids per user)
+    const insertResult = await client.query(`
+      INSERT INTO lances (leilao_id, usuario_id, valor)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `, [leilao_id, usuario_id, valor]);
+    lanceId = insertResult.rows[0].id;
+    lanceData = insertResult.rows[0];
     
     // Generate Pix payment with Asaas
     const description = `Lance no leilão: ${leilao.rows[0].nome}`;
@@ -578,14 +609,14 @@ app.get('/api/usuarios/:id/lances', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(`
-      SELECT 
+      SELECT
         l.*,
         leil.nome as leilao_nome,
         leil.foto_url,
         leil.data_fim,
         leil.status as leilao_status,
         leil.valor_meta,
-        CASE 
+        CASE
           WHEN leil.status = 'encerrado' THEN (
             SELECT valor_vencedor FROM resultados_leilao WHERE leilao_id = leil.id
           )
@@ -596,7 +627,63 @@ app.get('/api/usuarios/:id/lances', async (req, res) => {
       WHERE l.usuario_id = $1
       ORDER BY l.criado_em DESC
     `, [id]);
-    
+
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin: Get all bids for all auctions
+app.get('/api/admin/lances', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        l.id,
+        l.valor,
+        l.status_pix,
+        l.criado_em,
+        l.pix_confirmado_em,
+        u.nome as usuario_nome,
+        u.email as usuario_email,
+        u.telefone as usuario_telefone,
+        u.cpf_cnpj as usuario_cpf_cnpj,
+        leil.nome as leilao_nome,
+        leil.status as leilao_status,
+        leil.data_fim
+      FROM lances l
+      JOIN usuarios u ON l.usuario_id = u.id
+      JOIN leiloes leil ON l.leilao_id = leil.id
+      ORDER BY l.criado_em DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin: Get bids for specific auction
+app.get('/api/admin/leiloes/:id/lances', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(`
+      SELECT
+        l.id,
+        l.valor,
+        l.status_pix,
+        l.criado_em,
+        l.pix_confirmado_em,
+        u.nome as usuario_nome,
+        u.email as usuario_email,
+        u.telefone as usuario_telefone,
+        u.cpf_cnpj as usuario_cpf_cnpj
+      FROM lances l
+      JOIN usuarios u ON l.usuario_id = u.id
+      WHERE l.leilao_id = $1
+      ORDER BY l.valor ASC, l.criado_em ASC
+    `, [id]);
+
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -645,34 +732,68 @@ app.post('/api/leiloes/:id/calcular-vencedor', async (req, res) => {
     
     // Get auction details
     const leilao = await client.query(
-      'SELECT valor_meta, valor_arrecadado FROM leiloes WHERE id = $1',
+      'SELECT valor_meta, valor_arrecadado, nome FROM leiloes WHERE id = $1',
       [id]
     );
-    
+
     const valorMeta = parseFloat(leilao.rows[0].valor_meta);
     const valorArrecadado = parseFloat(leilao.rows[0].valor_arrecadado);
     const metaAtingida = valorArrecadado >= valorMeta;
-    
+    const auctionName = leilao.rows[0].nome;
+
     let valorFinal = menorLanceUnico;
-    
+
     // Apply 70% rule if meta not reached
     if (!metaAtingida && menorLanceUnico !== null) {
       valorFinal = valorArrecadado * 0.70;
     }
-    
+
+    // Determine prize info
+    const prizeInfo = metaAtingida
+      ? `O produto ${auctionName}`
+      : `R$ ${valorFinal.toFixed(2)} (70% do valor arrecadado)`;
+
     // Update auction status
     await client.query(
       'UPDATE leiloes SET status = $1 WHERE id = $2',
       ['encerrado', id]
     );
-    
+
     // Store result
     const resultado = await client.query(`
       INSERT INTO resultados_leilao (leilao_id, vencedor_id, lance_vencedor_id, valor_vencedor, valor_final, meta_atingida)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `, [id, vencedor, lanceVencedorId, menorLanceUnico, valorFinal, metaAtingida]);
-    
+
+    // Send WhatsApp notifications if there's a winner
+    if (vencedor && menorLanceUnico !== null) {
+      try {
+        // Get winner details
+        const winnerDetails = await client.query(
+          'SELECT nome, email, telefone FROM usuarios WHERE id = $1',
+          [vencedor]
+        );
+
+        if (winnerDetails.rows.length > 0) {
+          const winner = winnerDetails.rows[0];
+          const auction = { nome: auctionName };
+          const winningBid = { valor: menorLanceUnico };
+
+          // Notify winner
+          await whatsapp.notifyWinner(winner, auction, winningBid, prizeInfo);
+
+          // Notify admin
+          await whatsapp.notifyAdmin(auction, winner, winningBid, prizeInfo);
+
+          console.log('📱 Notificações WhatsApp enviadas para o vencedor e admin');
+        }
+      } catch (whatsappError) {
+        console.error('Erro ao enviar notificações WhatsApp:', whatsappError.message);
+        // Don't fail the whole process if WhatsApp fails
+      }
+    }
+
     await client.query('COMMIT');
     res.json(resultado.rows[0]);
   } catch (error) {
