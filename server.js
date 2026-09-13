@@ -95,6 +95,7 @@ async function initDatabase() {
         nome VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         telefone VARCHAR(20),
+        cpf_cnpj VARCHAR(20),
         senha_hash VARCHAR(255),
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -128,6 +129,13 @@ async function initDatabase() {
       console.log('✓ Colunas adicionadas à tabela leiloes');
     } catch (error) {
       console.log('Nota: Colunas podem já existir ou erro ao adicionar:', error.message);
+    }
+
+    try {
+      await pool.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS cpf_cnpj VARCHAR(20)`);
+      console.log('✓ Coluna cpf_cnpj adicionada à tabela usuarios');
+    } catch (error) {
+      console.log('Nota: Coluna cpf_cnpj pode já existir ou erro ao adicionar:', error.message);
     }
 
     await pool.query(`
@@ -247,13 +255,13 @@ app.post('/api/leiloes', async (req, res) => {
 // Create user
 app.post('/api/usuarios', async (req, res) => {
   try {
-    const { nome, email, telefone } = req.body;
+    const { nome, email, telefone, cpf_cnpj } = req.body;
     const result = await pool.query(`
-      INSERT INTO usuarios (nome, email, telefone)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (email) DO UPDATE SET nome = $1, telefone = $3
+      INSERT INTO usuarios (nome, email, telefone, cpf_cnpj)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (email) DO UPDATE SET nome = $1, telefone = $3, cpf_cnpj = $4
       RETURNING *
-    `, [nome, email, telefone]);
+    `, [nome, email, telefone, cpf_cnpj]);
     
     res.json(result.rows[0]);
   } catch (error) {
@@ -328,8 +336,16 @@ app.post('/api/lances', async (req, res) => {
     // Generate Pix payment with Asaas
     const description = `Lance no leilão: ${leilao.rows[0].nome}`;
     const referenceId = `lance-${lanceId}`;
-    
-    const pixPayment = await asaas.generatePixPayment(valor, description, referenceId);
+
+    // Get user data for Asaas customer creation
+    const userData = await client.query(
+      'SELECT nome, email, telefone, cpf_cnpj FROM usuarios WHERE id = $1',
+      [usuario_id]
+    );
+
+    const customerData = userData.rows[0] || null;
+
+    const pixPayment = await asaas.generatePixPayment(valor, description, referenceId, customerData);
     
     if (!pixPayment.success) {
       throw new Error(`Erro ao gerar pagamento Pix: ${pixPayment.error}`);

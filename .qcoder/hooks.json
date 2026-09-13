@@ -1,0 +1,51 @@
+{
+  "hooks": [
+    {
+      "name": "Auto Format on Write",
+      "description": "Format files before AI writes them",
+      "trigger": "pre_file_write",
+      "action": {
+        "type": "log",
+        "message": "File about to be written: ${filePath}",
+        "logLevel": "info"
+      },
+      "enabled": false,
+      "priority": 10,
+      "id": "hook-1-1788978508757"
+    },
+    {
+      "name": "Lint After Write",
+      "description": "Run linter after files are written",
+      "trigger": "post_file_write",
+      "action": {
+        "type": "log",
+        "message": "File written: ${filePath}",
+        "logLevel": "info"
+      },
+      "enabled": false,
+      "priority": 10,
+      "conditions": [
+        {
+          "field": "filePath",
+          "operator": "matches",
+          "value": "\\.(ts|js|tsx|jsx)$"
+        }
+      ],
+      "id": "hook-2-1788978508757"
+    },
+    {
+      "name": "Checkpoint on Complete",
+      "description": "Create checkpoint when task completes",
+      "trigger": "task_complete",
+      "action": {
+        "type": "log",
+        "message": "Task completed: ${taskId}",
+        "logLevel": "info"
+      },
+      "enabled": true,
+      "priority": 100,
+      "id": "hook-3-1788978508757"
+    }
+  ],
+  "idCounter": 1
+}

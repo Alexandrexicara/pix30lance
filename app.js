@@ -399,7 +399,7 @@ async function loadMyBids() {
     const c = document.getElementById('myBidsContent');
     if(!bids.length) return c.innerHTML = '<p class="no-bids">Você ainda não participou.</p>';
     c.innerHTML = `
-      <div class="user-info"><p><strong>Nome:</strong> ${currentUser.nome}</p><p><strong>E-mail:</strong> ${currentUser.email}</p></div>
+      <div class="user-info"><p><strong>Nome:</strong> ${currentUser.nome}</p><p><strong>E-mail:</strong> ${currentUser.email}</p><p><strong>CPF/CNPJ:</strong> ${currentUser.cpf_cnpj || 'Não informado'}</p></div>
       <div class="bids-list">${bids.map(b => `
         <div class="bid-item">
           <div class="bid-header"><strong>${b.leilao_nome}</strong><span class="status ${b.status_pix}">${b.status_pix}</span></div>
@@ -422,10 +422,11 @@ async function handleUserSubmit(e) {
   const nome = document.getElementById('userName').value;
   const email = document.getElementById('userEmail').value;
   const telefone = document.getElementById('userPhone').value;
+  const cpf_cnpj = document.getElementById('userCpfCnpj').value;
   try {
     const user = await (await fetch(`${API_BASE}/usuarios`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({nome,email,telefone})
+      body: JSON.stringify({nome,email,telefone,cpf_cnpj})
     })).json();
     if(user.error) return alert(user.error);
     currentUser = user;

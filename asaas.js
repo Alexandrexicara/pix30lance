@@ -22,7 +22,7 @@ class AsaasService {
     };
   }
 
-  async generatePixPayment(amount, description, referenceId) {
+  async generatePixPayment(amount, description, referenceId, customerData = null) {
     try {
       const valor = Number(amount);
 
@@ -36,6 +36,7 @@ class AsaasService {
       console.log('Descrição:', description);
       console.log('Referência:', referenceId);
       console.log('Sandbox:', this.isSandbox);
+      console.log('Dados do cliente:', customerData);
       console.log('==========================================');
 
       if (!description || description.trim() === '') {
@@ -48,11 +49,16 @@ class AsaasService {
 
       // Criar customer temporário para o pagamento
       const customerPayload = {
-        name: 'Cliente Leilão',
-        email: `cliente-${referenceId}@temp.com`,
-        phone: '11999999999',
-        cpfCnpj: '00000000000'
+        name: customerData?.nome || 'Cliente Leilão',
+        email: customerData?.email || `cliente-${referenceId}@temp.com`,
+        phone: customerData?.telefone || '11999999999',
+        cpfCnpj: this.cleanCpfCnpj(customerData?.cpf_cnpj)
       };
+
+      // Validar CPF/CNPJ
+      if (!this.validateCpfCnpj(customerPayload.cpfCnpj)) {
+        throw new Error('CPF/CNPJ inválido. Por favor, informe um documento válido.');
+      }
 
       const customerResponse = await axios.post(
         `${this.baseUrl}/customers`,
@@ -197,6 +203,91 @@ class AsaasService {
     };
 
     return statusMap[status] || 'pendente';
+  }
+
+  cleanCpfCnpj(cpfCnpj) {
+    if (!cpfCnpj) return '00000000000';
+    // Remove todos os caracteres não numéricos
+    return cpfCnpj.replace(/\D/g, '');
+  }
+
+  validateCpfCnpj(cpfCnpj) {
+    if (!cpfCnpj) return false;
+
+    const cleaned = this.cleanCpfCnpj(cpfCnpj);
+    const length = cleaned.length;
+
+    // CPF tem 11 dígitos, CNPJ tem 14
+    if (length !== 11 && length !== 14) {
+      return false;
+    }
+
+    // Validação básica de CPF
+    if (length === 11) {
+      // Não pode ser todos os mesmos dígitos
+      if (/^(\d)\1+$/.test(cleaned)) {
+        return false;
+      }
+
+      // Validação do dígito verificador do CPF
+      let sum = 0;
+      for (let i = 0; i < 9; i++) {
+        sum += parseInt(cleaned.charAt(i)) * (10 - i);
+      }
+      let digit = 11 - (sum % 11);
+      if (digit > 9) digit = 0;
+      if (digit !== parseInt(cleaned.charAt(9))) {
+        return false;
+      }
+
+      sum = 0;
+      for (let i = 0; i < 10; i++) {
+        sum += parseInt(cleaned.charAt(i)) * (11 - i);
+      }
+      digit = 11 - (sum % 11);
+      if (digit > 9) digit = 0;
+      if (digit !== parseInt(cleaned.charAt(10))) {
+        return false;
+      }
+
+      return true;
+    }
+
+    // Validação básica de CNPJ
+    if (length === 14) {
+      // Não pode ser todos os mesmos dígitos
+      if (/^(\d)\1+$/.test(cleaned)) {
+        return false;
+      }
+
+      // Validação do dígito verificador do CNPJ
+      const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+      const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+      let sum = 0;
+      for (let i = 0; i < 12; i++) {
+        sum += parseInt(cleaned.charAt(i)) * weights1[i];
+      }
+      let digit = 11 - (sum % 11);
+      if (digit > 9) digit = 0;
+      if (digit !== parseInt(cleaned.charAt(12))) {
+        return false;
+      }
+
+      sum = 0;
+      for (let i = 0; i < 13; i++) {
+        sum += parseInt(cleaned.charAt(i)) * weights2[i];
+      }
+      digit = 11 - (sum % 11);
+      if (digit > 9) digit = 0;
+      if (digit !== parseInt(cleaned.charAt(13))) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   async handleWebhook(notificationData) {

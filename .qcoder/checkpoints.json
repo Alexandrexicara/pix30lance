@@ -1,0 +1,13 @@
+{
+  "checkpoints": [
+    {
+      "id": "cp-1-1788978508766",
+      "timestamp": 1788978508766,
+      "label": "Initial state",
+      "description": "Workspace state at QCoder initialization",
+      "fileSnapshots": []
+    }
+  ],
+  "idCounter": 1,
+  "currentId": "cp-1-1788978508766"
+}

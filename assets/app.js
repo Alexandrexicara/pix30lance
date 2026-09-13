@@ -573,6 +573,7 @@ async function loadMyBids() {
       <div class="user-info">
         <p><strong>Nome:</strong> ${currentUser.nome}</p>
         <p><strong>E-mail:</strong> ${currentUser.email}</p>
+        <p><strong>CPF/CNPJ:</strong> ${currentUser.cpf_cnpj || 'Não informado'}</p>
       </div>
       <div class="bids-list">
         ${bids.map(b => `
@@ -612,16 +613,17 @@ async function loadMyBids() {
 // Handle user registration
 async function handleUserSubmit(e) {
   e.preventDefault();
-  
+
   const nome = document.getElementById('userName').value;
   const email = document.getElementById('userEmail').value;
   const telefone = document.getElementById('userPhone').value;
-  
+  const cpf_cnpj = document.getElementById('userCpfCnpj').value;
+
   try {
     const response = await fetch(`${API_BASE}/usuarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, telefone })
+      body: JSON.stringify({ nome, email, telefone, cpf_cnpj })
     });
     
     const user = await response.json();
