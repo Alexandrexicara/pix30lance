@@ -388,6 +388,21 @@ async function confirmPixPayment() {
 function openMyBids() {
   const t = document.getElementById('myBidsModalTitle'); if(t) t.textContent = 'Meus Lances e Participações';
   const b = document.getElementById('userFormSubmit'); if(b) b.textContent = 'Ver meus lances';
+  
+  // Pre-fill form if user exists
+  if(currentUser) {
+    document.getElementById('userName').value = currentUser.nome || '';
+    document.getElementById('userEmail').value = currentUser.email || '';
+    document.getElementById('userPhone').value = currentUser.telefone || '';
+    document.getElementById('userCpfCnpj').value = currentUser.cpf_cnpj || '';
+    
+    // If CPF/CNPJ is missing, change button text to indicate update is needed
+    if(!currentUser.cpf_cnpj) {
+      t.textContent = 'Complete seu cadastro';
+      b.textContent = 'Atualizar cadastro';
+    }
+  }
+  
   document.getElementById('myBidsModal').classList.add('show');
   document.getElementById('overlay').classList.add('show');
   if(currentUser) loadMyBids();
@@ -396,8 +411,27 @@ function openRegistrationWithBid(bidAmount) {
   let input = document.getElementById('pendingBidAmount');
   if(!input) { input = document.createElement('input'); input.type='hidden'; input.id='pendingBidAmount'; document.body.appendChild(input); }
   input.value = bidAmount;
-  const t = document.getElementById('myBidsModalTitle'); if(t) t.textContent = 'Cadastre-se para continuar';
-  const b = document.getElementById('userFormSubmit'); if(b) b.textContent = 'Cadastrar e continuar';
+  
+  const t = document.getElementById('myBidsModalTitle'); 
+  const b = document.getElementById('userFormSubmit');
+  
+  if(currentUser) {
+    // User exists but needs CPF/CNPJ
+    t.textContent = 'Complete seu cadastro com CPF/CNPJ';
+    b.textContent = 'Atualizar e continuar';
+    
+    // Pre-fill existing data
+    document.getElementById('userName').value = currentUser.nome || '';
+    document.getElementById('userEmail').value = currentUser.email || '';
+    document.getElementById('userPhone').value = currentUser.telefone || '';
+    document.getElementById('userCpfCnpj').value = currentUser.cpf_cnpj || '';
+    document.getElementById('userCpfCnpj').focus();
+  } else {
+    // New user
+    t.textContent = 'Cadastre-se para continuar';
+    b.textContent = 'Cadastrar e continuar';
+  }
+  
   document.getElementById('myBidsModal').classList.add('show');
   document.getElementById('overlay').classList.add('show');
 }
@@ -406,9 +440,43 @@ async function loadMyBids() {
   try {
     const bids = await (await fetch(`${API_BASE}/usuarios/${currentUser.id}/lances`)).json();
     const c = document.getElementById('myBidsContent');
-    if(!bids.length) return c.innerHTML = '<p class="no-bids">Você ainda não participou.</p>';
+    
+    // Check if CPF/CNPJ is missing
+    if(!currentUser.cpf_cnpj) {
+      c.innerHTML = `
+        <div class="user-info">
+          <p><strong>Nome:</strong> ${currentUser.nome}</p>
+          <p><strong>E-mail:</strong> ${currentUser.email}</p>
+          <p class="warning">⚠️ <strong>CPF/CNPJ não informado</strong></p>
+          <p>Você precisa informar seu CPF/CNPJ para participar dos leilões.</p>
+        </div>
+        <div class="bids-list">
+          <p class="no-bids">Complete seu cadastro acima para ver seus lances.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    if(!bids.length) {
+      c.innerHTML = `
+        <div class="user-info">
+          <p><strong>Nome:</strong> ${currentUser.nome}</p>
+          <p><strong>E-mail:</strong> ${currentUser.email}</p>
+          <p><strong>CPF/CNPJ:</strong> ${currentUser.cpf_cnpj}</p>
+        </div>
+        <div class="bids-list">
+          <p class="no-bids">Você ainda não participou de nenhum leilão.</p>
+        </div>
+      `;
+      return;
+    }
+    
     c.innerHTML = `
-      <div class="user-info"><p><strong>Nome:</strong> ${currentUser.nome}</p><p><strong>E-mail:</strong> ${currentUser.email}</p><p><strong>CPF/CNPJ:</strong> ${currentUser.cpf_cnpj || 'Não informado'}</p></div>
+      <div class="user-info">
+        <p><strong>Nome:</strong> ${currentUser.nome}</p>
+        <p><strong>E-mail:</strong> ${currentUser.email}</p>
+        <p><strong>CPF/CNPJ:</strong> ${currentUser.cpf_cnpj}</p>
+      </div>
       <div class="bids-list">${bids.map(b => `
         <div class="bid-item">
           <div class="bid-header"><strong>${b.leilao_nome}</strong><span class="status ${b.status_pix}">${b.status_pix}</span></div>
@@ -424,7 +492,10 @@ async function loadMyBids() {
       `).join('')}</div>
     `;
     bids.forEach(b => { if(b.leilao_status !== 'encerrado') updateCountdown(b.data_fim, `bid-countdown-${b.id}`); });
-  } catch { document.getElementById('myBidsContent').innerHTML = '<p class="error">Erro ao carregar.</p>'; }
+  } catch (error) {
+    console.error('Erro ao carregar lances:', error);
+    document.getElementById('myBidsContent').innerHTML = '<p class="error">Erro ao carregar seus lances.</p>';
+  }
 }
 async function handleUserSubmit(e) {
   e.preventDefault();
@@ -432,19 +503,39 @@ async function handleUserSubmit(e) {
   const email = document.getElementById('userEmail').value;
   const telefone = document.getElementById('userPhone').value;
   const cpf_cnpj = document.getElementById('userCpfCnpj').value;
+  
+  // Validate CPF/CNPJ
+  if (!cpf_cnpj || cpf_cnpj.trim() === '') {
+    alert('⚠️ CPF/CNPJ é obrigatório para participar dos leilões.');
+    return;
+  }
+  
   try {
-    const user = await (await fetch(`${API_BASE}/usuarios`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+    const response = await fetch(`${API_BASE}/usuarios`, {
+      method: 'POST', 
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({nome,email,telefone,cpf_cnpj})
-    })).json();
-    if(user.error) return alert(user.error);
+    });
+    
+    const user = await response.json();
+    
+    if(user.error) {
+      alert(user.error);
+      return;
+    }
+    
+    // Update current user with fresh data from server
     currentUser = user;
     localStorage.setItem('pix30-user', JSON.stringify(user));
+    
+    console.log('Usuário atualizado:', user);
+    console.log('CPF/CNPJ salvo:', user.cpf_cnpj);
+    
     const pending = document.getElementById('pendingBidAmount')?.value;
     if(pending && currentAuctionId) {
       document.getElementById('pendingBidAmount').remove();
       closeModal('myBidsModal');
-      alert('✅ Cadastro feito! Enviando lance...');
+      alert('✅ Cadastro atualizado com CPF/CNPJ! Enviando lance...');
       openAuction(currentAuctionId);
       const tentar = setInterval(() => {
         const inp = document.getElementById('bidAmount');
@@ -455,8 +546,13 @@ async function handleUserSubmit(e) {
           handleBidSubmit({preventDefault:()=>{}});
         }
       }, 100);
-    } else loadMyBids();
-  } catch { alert('Erro ao cadastrar.'); }
+    } else {
+      loadMyBids();
+    }
+  } catch (error) {
+    console.error('Erro ao cadastrar:', error);
+    alert('Erro ao cadastrar. Tente novamente.');
+  }
 }
 function closeModal(modalId) {
   document.getElementById(modalId).classList.remove('show');

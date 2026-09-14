@@ -313,15 +313,39 @@ app.post('/api/leiloes', async (req, res) => {
 app.post('/api/usuarios', async (req, res) => {
   try {
     const { nome, email, telefone, cpf_cnpj } = req.body;
-    const result = await pool.query(`
-      INSERT INTO usuarios (nome, email, telefone, cpf_cnpj)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (email) DO UPDATE SET nome = $1, telefone = $3, cpf_cnpj = $4
-      RETURNING *
-    `, [nome, email, telefone, cpf_cnpj]);
     
+    console.log('Criando/atualizando usuário:', { nome, email, telefone, cpf_cnpj });
+    
+    // Check if user already exists
+    const existingUser = await pool.query(
+      'SELECT * FROM usuarios WHERE email = $1',
+      [email]
+    );
+    
+    let result;
+    if (existingUser.rows.length > 0) {
+      // Update existing user
+      console.log('Usuário existente encontrado, atualizando...');
+      result = await pool.query(`
+        UPDATE usuarios 
+        SET nome = $1, telefone = $2, cpf_cnpj = $3
+        WHERE email = $4
+        RETURNING *
+      `, [nome, telefone, cpf_cnpj, email]);
+    } else {
+      // Create new user
+      console.log('Criando novo usuário...');
+      result = await pool.query(`
+        INSERT INTO usuarios (nome, email, telefone, cpf_cnpj)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `, [nome, email, telefone, cpf_cnpj]);
+    }
+    
+    console.log('Usuário salvo:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Erro ao criar/atualizar usuário:', error);
     res.status(500).json({ error: error.message });
   }
 });
