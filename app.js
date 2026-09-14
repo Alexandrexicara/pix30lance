@@ -306,7 +306,7 @@ async function handleBidSubmit(e) {
       const isDemo = result.demo || false;
       const demoWarning = isDemo ? `<p class="demo-warning">⚠️ <strong>MODO DEMONSTRAÇÃO:</strong> Pagamentos não são processados pelo PagBank. Use "Confirmar manualmente" para testar.</p>` : '';
       pixContent.innerHTML = `
-        <button class="modal-close" id="closePixModal">✕</button>
+        <button class="modal-close close-pix-modal">✕</button>
         <p class="eyebrow">PAGAMENTO PIX</p>
         <h2>Pague seu lance via Pix</h2>
         ${demoWarning}
@@ -324,7 +324,9 @@ async function handleBidSubmit(e) {
       document.getElementById('auctionModal').classList.remove('show');
       pixModal.classList.add('show');
       document.getElementById('overlay').classList.add('show');
-      document.getElementById('closePixModal').onclick = () => closeModal('pixModal');
+      
+      // Use event delegation for dynamically created close button
+      document.querySelector('.close-pix-modal').onclick = () => closeModal('pixModal');
       document.getElementById('copyPix').onclick = copyPixCode;
       if (!isDemo) document.getElementById('checkPayment').onclick = checkPaymentStatus;
       document.getElementById('confirmPix').onclick = confirmPixPayment;
@@ -608,17 +610,19 @@ function openRegisterModal() {
   document.getElementById('myBidsModal').classList.add('show');
   document.getElementById('overlay').classList.add('show');
 }
-// Initialize event listeners
-document.getElementById('openMyBids').onclick = openMyBids;
-document.getElementById('openRegister').onclick = openRegisterModal;
-document.getElementById('closeMyBids').onclick = () => closeModal('myBidsModal');
-document.getElementById('closeAuctionModal').onclick = () => closeModal('auctionModal');
-document.getElementById('overlay').onclick = (e) => {
-  // Only close if clicking the overlay itself, not modal content
-  if(e.target.id !== 'overlay') return;
-  closeModal('auctionModal');
-  closeModal('myBidsModal');
-  closeModal('pixModal');
-};
-document.getElementById('userForm').onsubmit = handleUserSubmit;
-loadAuctions();
+// Initialize event listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('openMyBids').onclick = openMyBids;
+  document.getElementById('openRegister').onclick = openRegisterModal;
+  document.getElementById('closeMyBids').onclick = () => closeModal('myBidsModal');
+  document.getElementById('closeAuctionModal').onclick = () => closeModal('auctionModal');
+  document.getElementById('overlay').onclick = (e) => {
+    // Only close if clicking the overlay itself, not modal content
+    if(e.target.id !== 'overlay') return;
+    closeModal('auctionModal');
+    closeModal('myBidsModal');
+    closeModal('pixModal');
+  };
+  document.getElementById('userForm').onsubmit = handleUserSubmit;
+  loadAuctions();
+});

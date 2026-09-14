@@ -7,7 +7,19 @@ const AsaasService = require('./asaas');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+// Try different import methods for CloudinaryStorage
+let CloudinaryStorage;
+try {
+  CloudinaryStorage = require('multer-storage-cloudinary').CloudinaryStorage;
+} catch (e) {
+  try {
+    CloudinaryStorage = require('multer-storage-cloudinary');
+  } catch (e2) {
+    console.log('⚠️ multer-storage-cloudinary não disponível, usando storage local');
+    CloudinaryStorage = null;
+  }
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -39,7 +51,7 @@ try {
 // PostgreSQL connection pool (local or Neon)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false
 });
 
 // Initialize Asaas service
@@ -56,7 +68,7 @@ function generateWhatsAppLink(phone, message) {
 // Configure multer for file uploads (Cloudinary only - no local fallback)
 let storage;
 try {
-  if (process.env.CLOUDINARY_URL || (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)) {
+  if (CloudinaryStorage && (process.env.CLOUDINARY_URL || (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET))) {
     console.log('Configurando CloudinaryStorage...');
     storage = new CloudinaryStorage({
       cloudinary: cloudinary,
@@ -68,7 +80,7 @@ try {
     });
     console.log('CloudinaryStorage configurado com sucesso');
   } else {
-    console.log('Cloudinary não configurado, usando storage local');
+    console.log('Cloudinary não configurado ou CloudinaryStorage não disponível, usando storage local');
     const fs = require('fs');
     const path = require('path');
 
