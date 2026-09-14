@@ -272,7 +272,10 @@ async function handleBidSubmit(e) {
     alert('⚠️ Você precisa completar seu cadastro com CPF/CNPJ antes de dar lance.');
     document.getElementById('pendingBidAmount').value = bidAmount;
     closeModal('auctionModal');
-    openRegistrationWithBid(bidAmount);
+    // Pequeno delay para garantir que o modal anterior feche completamente
+    setTimeout(() => {
+      openRegistrationWithBid(bidAmount);
+    }, 300);
     return;
   }
 
@@ -510,6 +513,12 @@ async function handleUserSubmit(e) {
     return;
   }
   
+  // Show loading state
+  const submitBtn = document.getElementById('userFormSubmit');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Processando...';
+  submitBtn.disabled = true;
+  
   try {
     const response = await fetch(`${API_BASE}/usuarios`, {
       method: 'POST', 
@@ -521,6 +530,8 @@ async function handleUserSubmit(e) {
     
     if(user.error) {
       alert(user.error);
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
       return;
     }
     
@@ -547,11 +558,17 @@ async function handleUserSubmit(e) {
         }
       }, 100);
     } else {
+      // Just show success and reload bids, don't close modal immediately
+      alert('✅ Cadastro realizado com sucesso!');
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
       loadMyBids();
     }
   } catch (error) {
     console.error('Erro ao cadastrar:', error);
     alert('Erro ao cadastrar. Tente novamente.');
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
   }
 }
 function closeModal(modalId) {
@@ -562,9 +579,46 @@ function closeModal(modalId) {
     if(carouselStates[k]?.interval) { clearInterval(carouselStates[k].interval); carouselStates[k].interval = null; }
   });
 }
+function openRegisterModal() {
+  const t = document.getElementById('myBidsModalTitle'); 
+  const b = document.getElementById('userFormSubmit');
+  
+  if(currentUser) {
+    // User exists - update registration
+    t.textContent = 'Atualizar cadastro';
+    b.textContent = 'Atualizar cadastro';
+    
+    // Pre-fill existing data
+    document.getElementById('userName').value = currentUser.nome || '';
+    document.getElementById('userEmail').value = currentUser.email || '';
+    document.getElementById('userPhone').value = currentUser.telefone || '';
+    document.getElementById('userCpfCnpj').value = currentUser.cpf_cnpj || '';
+  } else {
+    // New user
+    t.textContent = 'Cadastre-se';
+    b.textContent = 'Cadastrar';
+    
+    // Clear form
+    document.getElementById('userName').value = '';
+    document.getElementById('userEmail').value = '';
+    document.getElementById('userPhone').value = '';
+    document.getElementById('userCpfCnpj').value = '';
+  }
+  
+  document.getElementById('myBidsModal').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+}
+// Initialize event listeners
 document.getElementById('openMyBids').onclick = openMyBids;
+document.getElementById('openRegister').onclick = openRegisterModal;
 document.getElementById('closeMyBids').onclick = () => closeModal('myBidsModal');
 document.getElementById('closeAuctionModal').onclick = () => closeModal('auctionModal');
-document.getElementById('overlay').onclick = () => { closeModal('auctionModal'); closeModal('myBidsModal'); closeModal('pixModal'); };
+document.getElementById('overlay').onclick = (e) => {
+  // Only close if clicking the overlay itself, not modal content
+  if(e.target.id !== 'overlay') return;
+  closeModal('auctionModal');
+  closeModal('myBidsModal');
+  closeModal('pixModal');
+};
 document.getElementById('userForm').onsubmit = handleUserSubmit;
 loadAuctions();
