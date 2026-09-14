@@ -341,10 +341,22 @@ async function handleBidSubmit(e) {
 }
 
 let paymentCheckInterval = null;
-async function copyPixCode() {
-  const pixCode = document.getElementById('pixCode').textContent;
-  try { await navigator.clipboard.writeText(pixCode); alert('Código Pix copiado!'); }
-  catch { alert('Copie o código Pix manualmente.'); }
+async function copyPixCode(e) {
+  if(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  const pixCode = document.getElementById('pixCode');
+  if(!pixCode) return;
+  
+  const code = pixCode.textContent;
+  try { 
+    await navigator.clipboard.writeText(code); 
+    alert('Código Pix copiado!'); 
+  } catch { 
+    alert('Copie o código Pix manualmente.'); 
+  }
 }
 async function checkPaymentStatus() {
   if (!currentBidId) return;
@@ -504,6 +516,8 @@ async function loadMyBids() {
 }
 async function handleUserSubmit(e) {
   e.preventDefault();
+  e.stopPropagation(); // Impede propagação de eventos
+  
   const nome = document.getElementById('userName').value;
   const email = document.getElementById('userEmail').value;
   const telefone = document.getElementById('userPhone').value;
@@ -560,11 +574,11 @@ async function handleUserSubmit(e) {
         }
       }, 100);
     } else {
-      // Just show success and reload bids, don't close modal immediately
+      // Close modal and show success
+      closeModal('myBidsModal');
       alert('✅ Cadastro realizado com sucesso!');
       submitBtn.textContent = originalText;
       submitBtn.disabled = false;
-      loadMyBids();
     }
   } catch (error) {
     console.error('Erro ao cadastrar:', error);
@@ -585,6 +599,12 @@ function openRegisterModal() {
   const t = document.getElementById('myBidsModalTitle'); 
   const b = document.getElementById('userFormSubmit');
   
+  // Limpar formulário primeiro
+  document.getElementById('userName').value = '';
+  document.getElementById('userEmail').value = '';
+  document.getElementById('userPhone').value = '';
+  document.getElementById('userCpfCnpj').value = '';
+  
   if(currentUser) {
     // User exists - update registration
     t.textContent = 'Atualizar cadastro';
@@ -599,12 +619,6 @@ function openRegisterModal() {
     // New user
     t.textContent = 'Cadastre-se';
     b.textContent = 'Cadastrar';
-    
-    // Clear form
-    document.getElementById('userName').value = '';
-    document.getElementById('userEmail').value = '';
-    document.getElementById('userPhone').value = '';
-    document.getElementById('userCpfCnpj').value = '';
   }
   
   document.getElementById('myBidsModal').classList.add('show');

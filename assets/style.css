@@ -137,5 +137,74 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:50;opacity:0;pointer-events:none;transition:opacity 0.3s}
 .overlay.show{opacity:1;pointer-events:auto}
 
+/* My Bids Modal - Lighter background */
+#myBidsModal .modal-box {
+  background: #1a2026;
+  border: 1px solid #2a3a3e;
+}
+
+#myBidsModal label {
+  color: #aab7b9;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: block;
+}
+
+#myBidsModal input {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #1f2937;
+  font-size: 15px;
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#myBidsModal input:focus {
+  outline: none;
+  border-color: #39ff88;
+  box-shadow: 0 0 0 3px rgba(57, 255, 136, 0.1);
+}
+
+#myBidsModal input::placeholder {
+  color: #9ca3af;
+}
+
+#myBidsModal .eyebrow {
+  color: #39ff88;
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+#myBidsModal h2 {
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  font-size: 24px;
+}
+
+#myBidsModal .user-info {
+  background: #252d33;
+  border: 1px solid #2a3a3e;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+#myBidsModal .user-info p {
+  color: #f5f7f7;
+  margin: 5px 0;
+}
+
+#myBidsModal .user-info strong {
+  color: #ffffff;
+}
+
 @media(max-width:850px){.hero-grid,.offer{grid-template-columns:1fr}.products{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:repeat(2,1fr)}.nav nav{display:none}.hero{padding-top:55px}.auction-detail{grid-template-columns:1fr}.carousel-container{height:200px}}
 @media(max-width:520px){.products{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.hero h1{font-size:43px}.footer{display:block}.footer p{line-height:1.5}.section{padding:60px 0}.auction-stats{grid-template-columns:1fr}.carousel-container{height:180px}.carousel-container.detail-carousel{height:350px}}
