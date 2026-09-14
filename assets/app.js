@@ -1,4 +1,6 @@
-const API_BASE = '/api';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? '/api' 
+  : '/api';
 
 let currentUser = JSON.parse(localStorage.getItem('pix30-user') || 'null');
 let currentAuctionId = null;
@@ -525,25 +527,57 @@ function openMyBids() {
     submitBtn.textContent = 'Ver meus lances';
   }
   
-  document.getElementById('myBidsModal').classList.add('show');
-  document.getElementById('overlay').classList.add('show');
+  const myBidsModal = document.getElementById('myBidsModal');
+  const overlay = document.getElementById('overlay');
+  if(myBidsModal) myBidsModal.classList.add('show');
+  if(overlay) overlay.classList.add('show');
   
   if (currentUser) {
     loadMyBids();
   }
 }
 
+// Open registration modal
+function openRegisterModal() {
+  const modalTitle = document.getElementById('myBidsModalTitle');
+  if (modalTitle) {
+    modalTitle.textContent = 'Cadastre-se';
+  }
+  
+  const submitBtn = document.getElementById('userFormSubmit');
+  if (submitBtn) {
+    submitBtn.textContent = 'Cadastrar';
+  }
+  
+  // Clear form
+  const userName = document.getElementById('userName');
+  const userEmail = document.getElementById('userEmail');
+  const userPhone = document.getElementById('userPhone');
+  const userCpfCnpj = document.getElementById('userCpfCnpj');
+  
+  if(userName) userName.value = '';
+  if(userEmail) userEmail.value = '';
+  if(userPhone) userPhone.value = '';
+  if(userCpfCnpj) userCpfCnpj.value = '';
+  
+  const myBidsModal = document.getElementById('myBidsModal');
+  const overlay = document.getElementById('overlay');
+  if(myBidsModal) myBidsModal.classList.add('show');
+  if(overlay) overlay.classList.add('show');
+}
+
 // Open registration modal with pending bid
 function openRegistrationWithBid(bidAmount) {
   // Set pending bid amount
-  if (!document.getElementById('pendingBidAmount')) {
+  const pendingInput = document.getElementById('pendingBidAmount');
+  if (!pendingInput) {
     const input = document.createElement('input');
     input.type = 'hidden';
     input.id = 'pendingBidAmount';
     input.value = bidAmount;
     document.body.appendChild(input);
   } else {
-    document.getElementById('pendingBidAmount').value = bidAmount;
+    pendingInput.value = bidAmount;
   }
   
   // Change modal title to indicate registration
@@ -559,8 +593,10 @@ function openRegistrationWithBid(bidAmount) {
   }
   
   // Show user form
-  document.getElementById('myBidsModal').classList.add('show');
-  document.getElementById('overlay').classList.add('show');
+  const myBidsModal = document.getElementById('myBidsModal');
+  const overlay = document.getElementById('overlay');
+  if(myBidsModal) myBidsModal.classList.add('show');
+  if(overlay) overlay.classList.add('show');
 }
 
 // Load user's bids
@@ -689,32 +725,55 @@ async function handleUserSubmit(e) {
 
 // Modal controls
 function closeModal(modalId) {
-  document.getElementById(modalId).classList.remove('show');
-  document.getElementById('overlay').classList.remove('show');
+  const modal = document.getElementById(modalId);
+  const overlay = document.getElementById('overlay');
+  if(modal) modal.classList.remove('show');
+  if(overlay) overlay.classList.remove('show');
 }
 
-// Event listeners
-document.getElementById('openMyBids').onclick = openMyBids;
-document.getElementById('closeMyBids').onclick = () => closeModal('myBidsModal');
-document.getElementById('closeAuctionModal').onclick = () => closeModal('auctionModal');
-document.getElementById('closePixModal').onclick = () => closeModal('pixModal');
-document.getElementById('overlay').onclick = () => {
-  closeModal('auctionModal');
-  closeModal('myBidsModal');
-  closeModal('pixModal');
-};
-
-document.getElementById('userForm').onsubmit = handleUserSubmit;
-document.getElementById('copyPix').onclick = async () => {
-  const pixCode = document.getElementById('pixCode').textContent;
-  try {
-    await navigator.clipboard.writeText(pixCode);
-    alert('Chave Pix copiada!');
-  } catch {
-    alert('Copie a chave Pix manualmente.');
+// Event listeners - only attach when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const openMyBidsBtn = document.getElementById('openMyBids');
+  const openRegisterBtn = document.getElementById('openRegister');
+  const closeMyBidsBtn = document.getElementById('closeMyBids');
+  const closeAuctionModalBtn = document.getElementById('closeAuctionModal');
+  const closePixModalBtn = document.getElementById('closePixModal');
+  const overlay = document.getElementById('overlay');
+  const userForm = document.getElementById('userForm');
+  const copyPixBtn = document.getElementById('copyPix');
+  const confirmPixBtn = document.getElementById('confirmPix');
+  
+  if(openMyBidsBtn) openMyBidsBtn.onclick = openMyBids;
+  if(openRegisterBtn) openRegisterBtn.onclick = openRegisterModal;
+  if(closeMyBidsBtn) closeMyBidsBtn.onclick = () => closeModal('myBidsModal');
+  if(closeAuctionModalBtn) closeAuctionModalBtn.onclick = () => closeModal('auctionModal');
+  if(closePixModalBtn) closePixModalBtn.onclick = () => closeModal('pixModal');
+  if(overlay) {
+    overlay.onclick = () => {
+      closeModal('auctionModal');
+      closeModal('myBidsModal');
+      closeModal('pixModal');
+    };
   }
-};
-document.getElementById('confirmPix').onclick = confirmPixPayment;
+  
+  if(userForm) userForm.onsubmit = handleUserSubmit;
+  
+  if(copyPixBtn) {
+    copyPixBtn.onclick = async () => {
+      const pixCode = document.getElementById('pixCode');
+      if(pixCode) {
+        try {
+          await navigator.clipboard.writeText(pixCode.textContent);
+          alert('Chave Pix copiada!');
+        } catch {
+          alert('Copie a chave Pix manualmente.');
+        }
+      }
+    };
+  }
+  
+  if(confirmPixBtn) confirmPixBtn.onclick = confirmPixPayment;
 
-// Initialize
-loadAuctions();
+  // Initialize
+  loadAuctions();
+});

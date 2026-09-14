@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: pix30-lances
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: 3000
+      - key: BASE_URL
+        value: https://pix30lances.onrender.com
+      - key: PAGBANK_SANDBOX
+        value: true
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: PAGBANK_API_ID
+        sync: false
+      - key: PAGBANK_API_KEY
+        sync: false
+      - key: ADMIN_WHATSAPP_PHONE
+        sync: false

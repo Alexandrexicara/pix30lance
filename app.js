@@ -1,4 +1,6 @@
-const API_BASE = "/api"; // CORRIGIDO: Debug de erro adicionado
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? '/api' 
+  : '/api';
 let currentUser = JSON.parse(localStorage.getItem('pix30-user') || 'null');
 let currentAuctionId = null;
 let currentBidId = null;
@@ -408,20 +410,27 @@ function openMyBids() {
   
   // Pre-fill form if user exists
   if(currentUser) {
-    document.getElementById('userName').value = currentUser.nome || '';
-    document.getElementById('userEmail').value = currentUser.email || '';
-    document.getElementById('userPhone').value = currentUser.telefone || '';
-    document.getElementById('userCpfCnpj').value = currentUser.cpf_cnpj || '';
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+    const userPhone = document.getElementById('userPhone');
+    const userCpfCnpj = document.getElementById('userCpfCnpj');
+    
+    if(userName) userName.value = currentUser.nome || '';
+    if(userEmail) userEmail.value = currentUser.email || '';
+    if(userPhone) userPhone.value = currentUser.telefone || '';
+    if(userCpfCnpj) userCpfCnpj.value = currentUser.cpf_cnpj || '';
     
     // If CPF/CNPJ is missing, change button text to indicate update is needed
     if(!currentUser.cpf_cnpj) {
-      t.textContent = 'Complete seu cadastro';
-      b.textContent = 'Atualizar cadastro';
+      if(t) t.textContent = 'Complete seu cadastro';
+      if(b) b.textContent = 'Atualizar cadastro';
     }
   }
   
-  document.getElementById('myBidsModal').classList.add('show');
-  document.getElementById('overlay').classList.add('show');
+  const myBidsModal = document.getElementById('myBidsModal');
+  const overlay = document.getElementById('overlay');
+  if(myBidsModal) myBidsModal.classList.add('show');
+  if(overlay) overlay.classList.add('show');
   if(currentUser) loadMyBids();
 }
 function openRegistrationWithBid(bidAmount) {
@@ -434,23 +443,32 @@ function openRegistrationWithBid(bidAmount) {
   
   if(currentUser) {
     // User exists but needs CPF/CNPJ
-    t.textContent = 'Complete seu cadastro com CPF/CNPJ';
-    b.textContent = 'Atualizar e continuar';
+    if(t) t.textContent = 'Complete seu cadastro com CPF/CNPJ';
+    if(b) b.textContent = 'Atualizar e continuar';
     
     // Pre-fill existing data
-    document.getElementById('userName').value = currentUser.nome || '';
-    document.getElementById('userEmail').value = currentUser.email || '';
-    document.getElementById('userPhone').value = currentUser.telefone || '';
-    document.getElementById('userCpfCnpj').value = currentUser.cpf_cnpj || '';
-    document.getElementById('userCpfCnpj').focus();
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+    const userPhone = document.getElementById('userPhone');
+    const userCpfCnpj = document.getElementById('userCpfCnpj');
+    
+    if(userName) userName.value = currentUser.nome || '';
+    if(userEmail) userEmail.value = currentUser.email || '';
+    if(userPhone) userPhone.value = currentUser.telefone || '';
+    if(userCpfCnpj) {
+      userCpfCnpj.value = currentUser.cpf_cnpj || '';
+      userCpfCnpj.focus();
+    }
   } else {
     // New user
-    t.textContent = 'Cadastre-se para continuar';
-    b.textContent = 'Cadastrar e continuar';
+    if(t) t.textContent = 'Cadastre-se para continuar';
+    if(b) b.textContent = 'Cadastrar e continuar';
   }
   
-  document.getElementById('myBidsModal').classList.add('show');
-  document.getElementById('overlay').classList.add('show');
+  const myBidsModal = document.getElementById('myBidsModal');
+  const overlay = document.getElementById('overlay');
+  if(myBidsModal) myBidsModal.classList.add('show');
+  if(overlay) overlay.classList.add('show');
 }
 async function loadMyBids() {
   if(!currentUser) return;
@@ -600,29 +618,36 @@ function openRegisterModal() {
   const b = document.getElementById('userFormSubmit');
   
   // Limpar formulário primeiro
-  document.getElementById('userName').value = '';
-  document.getElementById('userEmail').value = '';
-  document.getElementById('userPhone').value = '';
-  document.getElementById('userCpfCnpj').value = '';
+  const userName = document.getElementById('userName');
+  const userEmail = document.getElementById('userEmail');
+  const userPhone = document.getElementById('userPhone');
+  const userCpfCnpj = document.getElementById('userCpfCnpj');
+  
+  if(userName) userName.value = '';
+  if(userEmail) userEmail.value = '';
+  if(userPhone) userPhone.value = '';
+  if(userCpfCnpj) userCpfCnpj.value = '';
   
   if(currentUser) {
     // User exists - update registration
-    t.textContent = 'Atualizar cadastro';
-    b.textContent = 'Atualizar cadastro';
+    if(t) t.textContent = 'Atualizar cadastro';
+    if(b) b.textContent = 'Atualizar cadastro';
     
     // Pre-fill existing data
-    document.getElementById('userName').value = currentUser.nome || '';
-    document.getElementById('userEmail').value = currentUser.email || '';
-    document.getElementById('userPhone').value = currentUser.telefone || '';
-    document.getElementById('userCpfCnpj').value = currentUser.cpf_cnpj || '';
+    if(userName) userName.value = currentUser.nome || '';
+    if(userEmail) userEmail.value = currentUser.email || '';
+    if(userPhone) userPhone.value = currentUser.telefone || '';
+    if(userCpfCnpj) userCpfCnpj.value = currentUser.cpf_cnpj || '';
   } else {
     // New user
-    t.textContent = 'Cadastre-se';
-    b.textContent = 'Cadastrar';
+    if(t) t.textContent = 'Cadastre-se';
+    if(b) b.textContent = 'Cadastrar';
   }
   
-  document.getElementById('myBidsModal').classList.add('show');
-  document.getElementById('overlay').classList.add('show');
+  const myBidsModal = document.getElementById('myBidsModal');
+  const overlay = document.getElementById('overlay');
+  if(myBidsModal) myBidsModal.classList.add('show');
+  if(overlay) overlay.classList.add('show');
 }
 // Initialize event listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

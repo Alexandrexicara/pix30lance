@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const AsaasService = require('./asaas');
+const PagBankService = require('./pagbank');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
@@ -56,6 +57,9 @@ const pool = new Pool({
 
 // Initialize Asaas service
 const asaas = new AsaasService();
+
+// Initialize PagBank service
+const pagbank = new PagBankService();
 
 // Sistema de notificações via WhatsApp link (wa.me)
 function generateWhatsAppLink(phone, message) {
@@ -425,7 +429,7 @@ app.post('/api/lances', async (req, res) => {
     // If demo payment, mark it for immediate confirmation
     const isDemo = pixPayment.demo || false;
     
-    // Update bid with PagBank data
+    // Update bid with Asaas data
     const updatedBid = await client.query(`
       UPDATE lances 
       SET pagbank_order_id = $2, qr_code_string = $3, qr_code_image = $4, copy_paste_code = $5
@@ -437,7 +441,7 @@ app.post('/api/lances', async (req, res) => {
     await client.query(`
       INSERT INTO auditoria_lances (lance_id, acao, detalhes)
       VALUES ($1, 'criado', $2)
-    `, [lanceId, `Lance de R$ ${valor} criado/alterado com PagBank order ${pixPayment.orderId}`]);
+    `, [lanceId, `Lance de R$ ${valor} criado/alterado com Asaas order ${pixPayment.orderId}`]);
     
     await client.query('COMMIT');
     
