@@ -729,6 +729,17 @@ function closeModal(modalId) {
   const overlay = document.getElementById('overlay');
   if(modal) modal.classList.remove('show');
   if(overlay) overlay.classList.remove('show');
+  
+  // Stop payment check if closing Pix modal
+  if(modalId === 'pixModal') stopPaymentCheck();
+  
+  // Clear carousel intervals
+  Object.keys(carouselStates).forEach(k => {
+    if(carouselStates[k]?.interval) { 
+      clearInterval(carouselStates[k].interval); 
+      carouselStates[k].interval = null; 
+    }
+  });
 }
 
 // Event listeners - only attach when DOM is ready
@@ -749,7 +760,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if(closeAuctionModalBtn) closeAuctionModalBtn.onclick = () => closeModal('auctionModal');
   if(closePixModalBtn) closePixModalBtn.onclick = () => closeModal('pixModal');
   if(overlay) {
-    overlay.onclick = () => {
+    overlay.onclick = (e) => {
+      // Only close if clicking the overlay itself, not modal content
+      if(e.target.id !== 'overlay') return;
       closeModal('auctionModal');
       closeModal('myBidsModal');
       closeModal('pixModal');
