@@ -4,7 +4,6 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const AsaasService = require('./asaas');
-const PagBankService = require('./pagbank');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
@@ -57,9 +56,6 @@ const pool = new Pool({
 
 // Initialize Asaas service
 const asaas = new AsaasService();
-
-// Initialize PagBank service
-const pagbank = new PagBankService();
 
 // Sistema de notificações via WhatsApp link (wa.me)
 function generateWhatsAppLink(phone, message) {
@@ -220,7 +216,7 @@ async function initDatabase() {
         valor DECIMAL(10,2) NOT NULL,
         status_pix VARCHAR(20) DEFAULT 'pendente',
         pix_confirmado_em TIMESTAMP,
-        pagbank_order_id VARCHAR(255),
+        asaas_order_id VARCHAR(255),
         qr_code_string TEXT,
         qr_code_image TEXT,
         copy_paste_code TEXT,
@@ -432,7 +428,7 @@ app.post('/api/lances', async (req, res) => {
     // Update bid with Asaas data
     const updatedBid = await client.query(`
       UPDATE lances 
-      SET pagbank_order_id = $2, qr_code_string = $3, qr_code_image = $4, copy_paste_code = $5
+      SET asaas_order_id = $2, qr_code_string = $3, qr_code_image = $4, copy_paste_code = $5
       WHERE id = $1
       RETURNING *
     `, [lanceId, pixPayment.orderId, pixPayment.qrCodeString, pixPayment.qrCodeImage, pixPayment.copyPasteCode]);
@@ -470,7 +466,7 @@ app.get('/api/lances/:id/check-payment', async (req, res) => {
     
     // Get bid with PagBank order ID
     const bid = await pool.query(
-      'SELECT pagbank_order_id, status_pix FROM lances WHERE id = $1',
+      'SELECT asaas_order_id, status_pix FROM lances WHERE id = $1',
       [id]
     );
     
@@ -478,12 +474,12 @@ app.get('/api/lances/:id/check-payment', async (req, res) => {
       return res.status(404).json({ error: 'Lance não encontrado' });
     }
     
-    if (!bid.rows[0].pagbank_order_id) {
+    if (!bid.rows[0].asaas_order_id) {
       return res.json({ status: bid.rows[0].status_pix, hasOrder: false });
     }
     
-    // Check status with PagBank
-    const statusCheck = await pagbank.checkPaymentStatus(bid.rows[0].pagbank_order_id);
+    // Check status with Asaas
+    const statusCheck = await asaas.checkPaymentStatus(bid.rows[0].asaas_order_id);
     
     if (!statusCheck.success) {
       return res.status(500).json({ error: statusCheck.error });
@@ -580,22 +576,22 @@ app.post('/api/lances/:id/confirmar-pix', async (req, res) => {
   }
 });
 
-// PagBank webhook endpoint
-app.post('/api/pagbank/webhook', async (req, res) => {
+// Asaas webhook endpoint
+app.post('/api/asaas/webhook', async (req, res) => {
   try {
     const notificationData = req.body;
     
     // Process webhook
-    const webhookResult = await pagbank.handleWebhook(notificationData);
+    const webhookResult = await asaas.handleWebhook(notificationData);
     
     if (!webhookResult.success) {
       console.error('Erro ao processar webhook:', webhookResult.error);
       return res.status(400).json({ error: webhookResult.error });
     }
     
-    // Find bid by PagBank order ID
+    // Find bid by Asaas order ID
     const bid = await pool.query(
-      'SELECT id FROM lances WHERE pagbank_order_id = $1',
+      'SELECT id FROM lances WHERE asaas_order_id = $1',
       [webhookResult.orderId]
     );
     

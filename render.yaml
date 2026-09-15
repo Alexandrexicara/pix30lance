@@ -11,7 +11,7 @@ services:
         value: 3000
       - key: BASE_URL
         value: https://pix30lances.onrender.com
-      - key: PAGBANK_SANDBOX
+      - key: ASAAS_SANDBOX
         value: true
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
@@ -21,9 +21,7 @@ services:
         sync: false
       - key: CLOUDINARY_URL
         sync: false
-      - key: PAGBANK_API_ID
-        sync: false
-      - key: PAGBANK_API_KEY
+      - key: ASAAS_API_KEY
         sync: false
       - key: ADMIN_WHATSAPP_PHONE
         sync: false
