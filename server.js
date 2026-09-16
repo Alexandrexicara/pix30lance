@@ -401,8 +401,8 @@ app.post('/api/lances', async (req, res) => {
       VALUES ($1, $2, $3)
       RETURNING *
     `, [leilao_id, usuario_id, valor]);
-    lanceId = insertResult.rows[0].id;
-    lanceData = insertResult.rows[0];
+    const lanceId = insertResult.rows[0].id;
+    const lanceData = insertResult.rows[0];
     
     // Generate Pix payment with Asaas
     const description = `Lance no leilão: ${leilao.rows[0].nome}`;
