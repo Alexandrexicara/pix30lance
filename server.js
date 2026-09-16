@@ -140,7 +140,12 @@ const upload = multer({
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://pix30lances.onrender.com', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static('.'));
 app.use(express.static('public'));
@@ -362,7 +367,7 @@ app.post('/api/usuarios', async (req, res) => {
   }
 });
 
-// Place a bid with PagBank integration
+// Place a bid with Asaas integration
 app.post('/api/lances', async (req, res) => {
   const client = await pool.connect();
   try {
@@ -371,8 +376,7 @@ app.post('/api/lances', async (req, res) => {
     console.log('=== POST /api/lances ===');
     console.log('Body:', req.body);
     console.log('BASE_URL:', process.env.BASE_URL);
-    console.log('PAGBANK_API_KEY:', process.env.PAGBANK_API_KEY ? 'configured' : 'NOT configured');
-    console.log('PAGBANK_SANDBOX:', process.env.PAGBANK_SANDBOX);
+    console.log('ASAAS_API_KEY:', process.env.ASAAS_API_KEY ? 'configured' : 'NOT configured');
 
     const { leilao_id, usuario_id, valor } = req.body;
     
@@ -459,12 +463,12 @@ app.post('/api/lances', async (req, res) => {
   }
 });
 
-// Check payment status via PagBank
+// Check payment status via Asaas
 app.get('/api/lances/:id/check-payment', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Get bid with PagBank order ID
+    // Get bid with Asaas order ID
     const bid = await pool.query(
       'SELECT asaas_order_id, status_pix FROM lances WHERE id = $1',
       [id]
@@ -500,7 +504,7 @@ app.get('/api/lances/:id/check-payment', async (req, res) => {
         // Log to audit
         await client.query(`
           INSERT INTO auditoria_lances (lance_id, acao, detalhes)
-          VALUES ($1, 'pix_confirmado', 'Pagamento Pix confirmado via PagBank webhook')
+          VALUES ($1, 'pix_confirmado', 'Pagamento Pix confirmado via Asaas webhook')
         `, [id]);
         
         // Update auction total
@@ -615,7 +619,7 @@ app.post('/api/asaas/webhook', async (req, res) => {
         // Log to audit
         await client.query(`
           INSERT INTO auditoria_lances (lance_id, acao, detalhes)
-          VALUES ($1, 'pix_confirmado', 'Pagamento Pix confirmado via PagBank webhook')
+          VALUES ($1, 'pix_confirmado', 'Pagamento Pix confirmado via Asaas webhook')
         `, [bid.rows[0].id]);
         
         // Update auction total
