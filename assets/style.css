@@ -144,7 +144,7 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 }
 
 #myBidsModal label {
-  color: #aab7b9;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 5px;
@@ -153,10 +153,10 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 
 #myBidsModal input {
   background: #ffffff;
-  border: 1px solid #d1d5db;
+  border: 2px solid #39ff88;
   border-radius: 8px;
   padding: 12px 16px;
-  color: #1f2937;
+  color: #000000;
   font-size: 15px;
   width: 100%;
   margin-top: 4px;

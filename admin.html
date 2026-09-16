@@ -12,62 +12,10 @@
     <div class="container nav">
       <a class="logo" href="index.html"><span>PIX</span><b>30</b></a>
       <nav>
-        <a href="admin.html">Admin</a>
         <a href="index.html">Voltar ao site</a>
-        <button class="cart-btn open-login" onclick="openModal('loginModal')">Login</button>
-        <button class="cart-btn open-register" onclick="openModal('registerModal')">Cadastro</button>
       </nav>
     </div>
   </header>
-  <!-- Register Modal -->
-  <div id="registerModal" class="modal">
-    <div class="modal-box center">
-      <span class="modal-close" onclick="closeModal('registerModal')">&times;</span>
-      <h2>Cadastro de Usuário</h2>
-      <form id="registerForm">
-        <div class="form-group">
-          <label>Nome</label>
-          <input type="text" id="registerName" required>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="registerEmail" required>
-        </div>
-        <div class="form-group">
-          <label>Telefone</label>
-          <input type="tel" id="registerPhone" required>
-        </div>
-        <div class="form-group">
-          <label>CPF/CNPJ</label>
-          <input type="text" id="registerCpfCnpj" required>
-        </div>
-        <div class="form-group">
-          <label>Senha</label>
-          <input type="password" id="registerPassword" required>
-        </div>
-        <button type="submit" class="btn primary" style="width:100%">Cadastrar</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Login Modal -->
-  <div id="loginModal" class="modal">
-    <div class="modal-box center">
-      <span class="modal-close" onclick="closeModal('loginModal')">&times;</span>
-      <h2>Login</h2>
-      <form id="loginForm">
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="loginEmail" required>
-        </div>
-        <div class="form-group">
-          <label>Senha</label>
-          <input type="password" id="loginPassword" required>
-        </div>
-        <button type="submit" class="btn primary" style="width:100%">Entrar</button>
-      </form>
-    </div>
-  </div>
 
   <main>
     <section class="section">
@@ -108,7 +56,7 @@
               <input type="url" id="auctionPhoto3" placeholder="https://...">
             </label>
             <label>Foto 4 (opcional)
-              <input type="file" id="auctionPhoto4File" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+              <input type="file" id="auctionPhoto4File" accept="image/jpeg,image/jpg,imagepng,image/gif,image/webp">
               <small>Ou cole a URL abaixo</small>
             </label>
             <label>URL da foto 4 (opcional)
@@ -216,7 +164,7 @@
 
     // Create new auction
     async function createAuction(e) {
-  alert("Enviando dados... Aguarde!");
+      alert("Enviando dados... Aguarde!");
       e.preventDefault();
       
       const nome = document.getElementById('auctionName').value;
@@ -353,7 +301,6 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nome, descricao, foto_url: finalFotoUrl, foto_url_2: finalFotoUrl2, foto_url_3: finalFotoUrl3, foto_url_4: finalFotoUrl4, foto_url_5: finalFotoUrl5, valor_meta, data_inicio })
-          
         });
         
         const result = await response.json();
@@ -542,80 +489,6 @@
         document.getElementById('notificationsContainer').innerHTML = '<p class="error">Erro ao carregar notificações. Tente novamente.</p>';
       }
     }
-
-    // Modal functions
-    function openModal(modalId) {
-      document.getElementById(modalId).classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('show');
-      document.body.style.overflow = '';
-    }
-
-    // Event listeners for modal open/close
-    document.querySelectorAll('.open-register').forEach(btn => {
-      btn.onclick = () => openModal('registerModal');
-    });
-    document.querySelectorAll('.open-login').forEach(btn => {
-      btn.onclick = () => openModal('loginModal');
-    });
-    document.querySelectorAll('.modal-close').forEach(btn => {
-      btn.onclick = () => closeModal(btn.parentElement.parentElement.id);
-    });
-    window.onclick = (event) => {
-      if (event.target.classList.contains('modal')) {
-        closeModal(event.target.id);
-      }
-    };
-
-    // Form submissions
-    document.getElementById('registerForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const userData = {
-        nome: document.getElementById('registerName').value,
-        email: document.getElementById('registerEmail').value,
-        telefone: document.getElementById('registerPhone').value,
-        cpf_cnpj: document.getElementById('registerCpfCnpj').value
-      };
-      try {
-        const response = await fetch('/api/usuarios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userData)
-        });
-        const result = await response.json();
-        if (result.error) {
-          alert(result.error);
-          return;
-        }
-        alert('✅ Cadastro realizado com sucesso!');
-        closeModal('registerModal');
-        loadAdminAuctions();
-      } catch (error) {
-        console.error('Erro ao cadastrar:', error);
-        alert('Erro ao cadastrar. Tente novamente.');
-      }
-    };
-
-    document.getElementById('loginForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
-      try {
-        const response = await fetch(`/api/usuarios?email=${email}`);
-        const users = await response.json();
-        if (users.length > 0) {
-          alert('✅ Login bem-sucedido! Seja bem-vindo, ' + users[0].nome);
-          closeModal('loginModal');
-        } else {
-          alert('Usuário não encontrado. Por favor, cadastre-se primeiro.');
-        }
-      } catch (error) {
-        console.error('Erro ao fazer login:', error);
-        alert('Erro ao fazer login. Tente novamente.');
-      }
-    };
 
     // Set default start date to now
     document.getElementById('auctionStart').value = new Date().toISOString().slice(0, 16);
