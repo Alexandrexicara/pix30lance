@@ -6,6 +6,11 @@ let currentUser = JSON.parse(localStorage.getItem('pix30-user') || 'null');
 let currentAuctionId = null;
 let currentBidId = null;
 
+function setPendingBidAmount(amount) {
+  const input = document.getElementById('pendingBidAmount');
+  if (input) input.value = amount;
+}
+
 const money = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatDate = d => new Date(d).toLocaleDateString('pt-BR');
 
@@ -113,6 +118,7 @@ function updateCountdown(endDate, elementId) {
 async function loadAuctions() {
   try {
     const response = await fetch(`${API_BASE}/leiloes`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const auctions = await response.json();
     
     const el = document.getElementById('auctions');
@@ -122,7 +128,9 @@ async function loadAuctions() {
     }
     
     el.innerHTML = auctions.map(a => {
-      const percentMeta = Math.min((a.arrecadado_real / a.valor_meta) * 100, 100).toFixed(1);
+      const percentMeta = a.valor_meta > 0
+        ? Math.min((a.arrecadado_real / a.valor_meta) * 100, 100).toFixed(1)
+        : '0.0';
       const photos = [a.foto_url, a.foto_url_2, a.foto_url_3, a.foto_url_4, a.foto_url_5].filter(url => url);
       
       return `
@@ -195,9 +203,12 @@ async function openAuction(auctionId) {
   
   try {
     const response = await fetch(`${API_BASE}/leiloes/${auctionId}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const auction = await response.json();
     
-    const percentMeta = Math.min((auction.arrecadado_real / auction.valor_meta) * 100, 100).toFixed(1);
+    const percentMeta = auction.valor_meta > 0
+      ? Math.min((auction.arrecadado_real / auction.valor_meta) * 100, 100).toFixed(1)
+      : '0.0';
     
     const details = document.getElementById('auctionDetails');
     const photos = [auction.foto_url, auction.foto_url_2, auction.foto_url_3, auction.foto_url_4, auction.foto_url_5].filter(url => url);
@@ -323,7 +334,7 @@ async function handleBidSubmit(e) {
   // Se usuário não estiver cadastrado, pede cadastro
   if (!currentUser) {
     // Abre modal de cadastro com valor do lance salvo
-    document.getElementById('pendingBidAmount').value = bidAmount;
+    setPendingBidAmount(bidAmount);
     closeModal('auctionModal');
     openRegistrationWithBid(bidAmount);
     return;
@@ -332,7 +343,7 @@ async function handleBidSubmit(e) {
   // Verificar se usuário tem CPF/CNPJ cadastrado
   if (!currentUser.cpf_cnpj) {
     alert('⚠️ Você precisa completar seu cadastro com CPF/CNPJ antes de dar lance.');
-    document.getElementById('pendingBidAmount').value = bidAmount;
+    setPendingBidAmount(bidAmount);
     closeModal('auctionModal');
     openRegistrationWithBid(bidAmount);
     return;
@@ -350,6 +361,7 @@ async function handleBidSubmit(e) {
     });
     
     const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
     
     if (result.error) {
       alert(result.error);
@@ -389,7 +401,8 @@ async function handleBidSubmit(e) {
     // Re-attach event listeners
     document.getElementById('closePixModal').onclick = () => closeModal('pixModal');
     document.getElementById('copyPix').onclick = copyPixCode;
-    document.getElementById('checkPayment').onclick = checkPaymentStatus;
+    const checkPaymentButton = document.getElementById('checkPayment');
+    if (checkPaymentButton) checkPaymentButton.onclick = checkPaymentStatus;
     document.getElementById('confirmPix').onclick = confirmPixPayment;
     
     // Auto-check payment status every 10 seconds
@@ -569,16 +582,7 @@ function openRegisterModal() {
 // Open registration modal with pending bid
 function openRegistrationWithBid(bidAmount) {
   // Set pending bid amount
-  const pendingInput = document.getElementById('pendingBidAmount');
-  if (!pendingInput) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.id = 'pendingBidAmount';
-    input.value = bidAmount;
-    document.body.appendChild(input);
-  } else {
-    pendingInput.value = bidAmount;
-  }
+  setPendingBidAmount(bidAmount);
   
   // Change modal title to indicate registration
   const modalTitle = document.getElementById('myBidsModalTitle');
@@ -605,6 +609,7 @@ async function loadMyBids() {
   
   try {
     const response = await fetch(`${API_BASE}/usuarios/${currentUser.id}/lances`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const bids = await response.json();
     
     const content = document.getElementById('myBidsContent');
@@ -673,6 +678,7 @@ async function handleUserSubmit(e) {
     });
     
     const user = await response.json();
+    if (!response.ok) throw new Error(user.error || `HTTP ${response.status}`);
     
     if (user.error) {
       alert(user.error);

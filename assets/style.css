@@ -129,7 +129,8 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 /* Modal Styles */
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s}
 .modal.show{opacity:1;pointer-events:auto}
-.modal-box{background:#0a1215;border:1px solid #1b292d;border-radius:16px;padding:30px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;position:relative;pointer-events:auto}
+.modal-box{background:#0a1215;border:1px solid #1b292d;border-radius:16px;padding:30px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;position:relative;pointer-events:none}
+.modal.show .modal-box{pointer-events:auto}
 .modal-box.large{max-width:900px}
 .modal-box.center{text-align:center}
 .modal-close{position:absolute;top:15px;right:15px;background:transparent;border:none;color:#899799;font-size:24px;cursor:pointer;padding:5px;z-index:10}
@@ -173,6 +174,39 @@ video{max-width:100%;height:auto;border-radius:16px;border:1px solid #1b292d}
 
 #myBidsModal input::placeholder {
   color: #9ca3af;
+}
+
+/* Inputs stay readable in every modal and form. */
+input, select, textarea {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #111820;
+  border: 2px solid #52636a;
+  border-radius: 8px;
+  padding: 11px 13px;
+  font: inherit;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #68777d;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(57, 255, 136, 0.45);
+  outline-offset: 1px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+#pendingBidAmount {
+  display: none;
 }
 
 #myBidsModal .eyebrow {

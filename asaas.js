@@ -51,18 +51,16 @@ class AsaasService {
       const customerPayload = {
         name: customerData?.nome || 'Cliente Leilão',
         email: customerData?.email || `cliente-${referenceId}@temp.com`,
-        phone: customerData?.telefone || '11999999999',
-        cpfCnpj: this.cleanCpfCnpj(customerData?.cpf_cnpj)
+        phone: customerData?.telefone || '11999999999'
       };
 
-      // Validar CPF/CNPJ (apenas se fornecido)
-      if (customerPayload.cpfCnpj && customerPayload.cpfCnpj !== '00000000000') {
-        if (!this.validateCpfCnpj(customerPayload.cpfCnpj)) {
+      // Envia o documento somente quando ele for válido; um CPF fictício é rejeitado pelo Asaas.
+      const cpfCnpj = this.cleanCpfCnpj(customerData?.cpf_cnpj);
+      if (cpfCnpj) {
+        if (!this.validateCpfCnpj(cpfCnpj)) {
           throw new Error('CPF/CNPJ inválido. Por favor, atualize seu cadastro com um documento válido.');
         }
-      } else {
-        console.warn('⚠️ CPF/CNPJ não fornecido ou inválido, usando CPF temporário');
-        customerPayload.cpfCnpj = '00000000000'; // CPF temporário para permitir funcionamento
+        customerPayload.cpfCnpj = cpfCnpj;
       }
 
       const customerResponse = await axios.post(
@@ -121,7 +119,9 @@ class AsaasService {
       }
 
       // O Asaas já retorna o QR Code em base64
-      const qrCodeImage = qrCodeData.encodedImage;
+      const qrCodeImage = qrCodeData.encodedImage.startsWith('data:')
+        ? qrCodeData.encodedImage
+        : `data:image/png;base64,${qrCodeData.encodedImage}`;
       const copyPasteCode = qrCodeData.payload;
 
       return {
@@ -299,7 +299,7 @@ class AsaasService {
     try {
       console.log('📩 WEBHOOK ASAAS RECEBIDO:', JSON.stringify(notificationData, null, 2));
 
-      const paymentId = notificationData?.payment?.id || notificationData?.payment?.id;
+      const paymentId = notificationData?.payment?.id;
 
       if (!paymentId) {
         console.warn('⚠️ Webhook recebido sem payment_id.');

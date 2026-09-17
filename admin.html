@@ -123,6 +123,7 @@
       try {
         const response = await fetch(`${API_BASE}/admin/leiloes`);
         const auctions = await response.json();
+        if (!response.ok) throw new Error(auctions.error || `HTTP ${response.status}`);
         
         const el = document.getElementById('adminAuctions');
         if (auctions.length === 0) {
@@ -164,7 +165,6 @@
 
     // Create new auction
     async function createAuction(e) {
-      alert("Enviando dados... Aguarde!");
       e.preventDefault();
       
       const nome = document.getElementById('auctionName').value;
@@ -187,116 +187,42 @@
       let finalFotoUrl3 = foto_url_3;
       let finalFotoUrl4 = foto_url_4;
       let finalFotoUrl5 = foto_url_5;
+      const submitBtn = document.querySelector('#createAuctionForm button[type="submit"]');
+      const originalBtnText = submitBtn.textContent;
+
+      submitBtn.textContent = 'Aguarde, criando leilão...';
+      submitBtn.disabled = true;
       
       try {
+        const uploadPhoto = async (file) => {
+          const formData = new FormData();
+          formData.append('foto', file);
+          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+          const uploadResult = await uploadResponse.json();
+          if (!uploadResponse.ok || !uploadResult.success || !uploadResult.fotoUrl) {
+            throw new Error(uploadResult.error || `Falha no upload (HTTP ${uploadResponse.status})`);
+          }
+          return uploadResult.fotoUrl;
+        };
+
         // Upload photos if files are selected
         if (fotoFile) {
-          const formData = new FormData();
-          formData.append('foto', fotoFile);
-          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadText = await uploadResponse.text();
-          console.log('Upload response:', uploadText);
-          let uploadResult;
-          try {
-            uploadResult = JSON.parse(uploadText);
-          } catch (e) {
-            console.error('Resposta não é JSON:', uploadText);
-            alert('Erro no upload: resposta inválida do servidor');
-            return;
-          }
-          if (uploadResult.success) finalFotoUrl = uploadResult.fotoUrl;
-          else {
-            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
-            return;
-          }
+          finalFotoUrl = await uploadPhoto(fotoFile);
         }
         if (fotoFile2) {
-          const formData = new FormData();
-          formData.append('foto', fotoFile2);
-          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadText = await uploadResponse.text();
-          console.log('Upload response:', uploadText);
-          let uploadResult;
-          try {
-            uploadResult = JSON.parse(uploadText);
-          } catch (e) {
-            console.error('Resposta não é JSON:', uploadText);
-            alert('Erro no upload: resposta inválida do servidor');
-            return;
-          }
-          if (uploadResult.success) finalFotoUrl2 = uploadResult.fotoUrl;
-          else {
-            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
-            return;
-          }
+          finalFotoUrl2 = await uploadPhoto(fotoFile2);
         }
         if (fotoFile3) {
-          const formData = new FormData();
-          formData.append('foto', fotoFile3);
-          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadText = await uploadResponse.text();
-          console.log('Upload response:', uploadText);
-          let uploadResult;
-          try {
-            uploadResult = JSON.parse(uploadText);
-          } catch (e) {
-            console.error('Resposta não é JSON:', uploadText);
-            alert('Erro no upload: resposta inválida do servidor');
-            return;
-          }
-          if (uploadResult.success) finalFotoUrl3 = uploadResult.fotoUrl;
-          else {
-            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
-            return;
-          }
+          finalFotoUrl3 = await uploadPhoto(fotoFile3);
         }
         if (fotoFile4) {
-          const formData = new FormData();
-          formData.append('foto', fotoFile4);
-          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadText = await uploadResponse.text();
-          console.log('Upload response:', uploadText);
-          let uploadResult;
-          try {
-            uploadResult = JSON.parse(uploadText);
-          } catch (e) {
-            console.error('Resposta não é JSON:', uploadText);
-            alert('Erro no upload: resposta inválida do servidor');
-            return;
-          }
-          if (uploadResult.success) finalFotoUrl4 = uploadResult.fotoUrl;
-          else {
-            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
-            return;
-          }
+          finalFotoUrl4 = await uploadPhoto(fotoFile4);
         }
         if (fotoFile5) {
-          const formData = new FormData();
-          formData.append('foto', fotoFile5);
-          const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadText = await uploadResponse.text();
-          console.log('Upload response:', uploadText);
-          let uploadResult;
-          try {
-            uploadResult = JSON.parse(uploadText);
-          } catch (e) {
-            console.error('Resposta não é JSON:', uploadText);
-            alert('Erro no upload: resposta inválida do servidor');
-            return;
-          }
-          if (uploadResult.success) finalFotoUrl5 = uploadResult.fotoUrl;
-          else {
-            alert('Erro no upload: ' + (uploadResult.error || 'Erro desconhecido'));
-            return;
-          }
+          finalFotoUrl5 = await uploadPhoto(fotoFile5);
         }
         
         // Show loading message
-        const submitBtn = document.querySelector('#createAuctionForm button[type="submit"]');
-        const originalBtnText = submitBtn.textContent;
-        submitBtn.textContent = '⏳ Aguarde, criando leilão...';
-        submitBtn.disabled = true;
-        
         const response = await fetch(`${API_BASE}/leiloes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -304,22 +230,17 @@
         });
         
         const result = await response.json();
-        
-        // Reset button
-        submitBtn.textContent = originalBtnText;
-        submitBtn.disabled = false;
-        
-        if (result.error) {
-          alert(result.error);
-          return;
-        }
+        if (!response.ok || result.error) throw new Error(result.error || `Falha ao criar leilão (HTTP ${response.status})`);
         
         alert('✅ Leilão criado com sucesso!');
         document.getElementById('createAuctionForm').reset();
         loadAdminAuctions();
       } catch (error) {
         console.error('Erro ao criar leilão:', error);
-        alert('Erro ao criar leilão. Tente novamente.');
+        alert(error.message || 'Erro ao criar leilão. Tente novamente.');
+      } finally {
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
       }
     }
 

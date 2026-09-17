@@ -309,9 +309,16 @@ app.get('/api/leiloes/:id', async (req, res) => {
 app.post('/api/leiloes', async (req, res) => {
   try {
     const { nome, descricao, foto_url, foto_url_2, foto_url_3, foto_url_4, foto_url_5, valor_meta, data_inicio } = req.body;
+
+    if (!nome || !descricao || !Number.isFinite(Number(valor_meta)) || Number(valor_meta) <= 0 || !data_inicio) {
+      return res.status(400).json({ error: 'Preencha nome, descrição, valor da meta e data de início.' });
+    }
     
     // Calculate end date (30 days from start)
     const data_fim = new Date(data_inicio);
+    if (Number.isNaN(data_fim.getTime())) {
+      return res.status(400).json({ error: 'A data de início é inválida.' });
+    }
     data_fim.setDate(data_fim.getDate() + 30);
     
     const result = await pool.query(`
@@ -511,7 +518,10 @@ app.get('/api/lances/:id/check-payment', async (req, res) => {
         await client.query(`
           UPDATE leiloes 
           SET valor_arrecadado = (
-            COALESCE(SUM(CASE WHEN status_pix = 'confirmado' THEN valor ELSE 0 END), 0)
+            SELECT COALESCE(SUM(valor), 0)
+            FROM lances
+            WHERE leilao_id = (SELECT leilao_id FROM lances WHERE id = $1)
+              AND status_pix = 'confirmado'
           )
           WHERE id = (SELECT leilao_id FROM lances WHERE id = $1)
         `, [id]);
@@ -565,7 +575,9 @@ app.post('/api/lances/:id/confirmar-pix', async (req, res) => {
     await client.query(`
       UPDATE leiloes 
       SET valor_arrecadado = (
-        COALESCE(SUM(CASE WHEN status_pix = 'confirmado' THEN valor ELSE 0 END), 0)
+        SELECT COALESCE(SUM(valor), 0)
+        FROM lances
+        WHERE leilao_id = $1 AND status_pix = 'confirmado'
       )
       WHERE id = $1
     `, [result.rows[0].leilao_id]);
@@ -626,7 +638,10 @@ app.post('/api/asaas/webhook', async (req, res) => {
         await client.query(`
           UPDATE leiloes 
           SET valor_arrecadado = (
-            COALESCE(SUM(CASE WHEN status_pix = 'confirmado' THEN valor ELSE 0 END), 0)
+            SELECT COALESCE(SUM(valor), 0)
+            FROM lances
+            WHERE leilao_id = (SELECT leilao_id FROM lances WHERE id = $1)
+              AND status_pix = 'confirmado'
           )
           WHERE id = (SELECT leilao_id FROM lances WHERE id = $1)
         `, [bid.rows[0].id]);
@@ -1058,12 +1073,15 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
     if (req.file.secure_url) {
       fotoUrl = req.file.secure_url;
       console.log('Usando URL do Cloudinary:', fotoUrl);
-    } else if (req.file.path) {
+    } else if (typeof req.file.path === 'string' && /^https?:\/\//i.test(req.file.path)) {
       fotoUrl = req.file.path;
-      console.log('Usando caminho local:', fotoUrl);
-    } else {
+      console.log('Usando URL do storage remoto:', fotoUrl);
+    } else if (req.file.filename) {
       fotoUrl = `/uploads/${req.file.filename}`;
       console.log('Usando caminho relativo:', fotoUrl);
+    } else if (req.file.path) {
+      fotoUrl = req.file.path;
+      console.log('Usando caminho informado pelo storage:', fotoUrl);
     }
 
     console.log('URL final:', fotoUrl);
