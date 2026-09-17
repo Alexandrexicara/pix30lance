@@ -430,7 +430,9 @@ app.post('/api/lances', async (req, res) => {
     const pixPayment = await asaas.generatePixPayment(valor, description, referenceId, customerData);
     
     if (!pixPayment.success) {
-      throw new Error(`Erro ao gerar pagamento Pix: ${pixPayment.error}`);
+      const error = new Error(`Erro ao gerar pagamento Pix: ${pixPayment.error}`);
+      error.paymentSetupError = /pix.*disponível|conta.*aprovada|approved|account/i.test(pixPayment.error);
+      throw error;
     }
     
     // If demo payment, mark it for immediate confirmation
@@ -464,7 +466,11 @@ app.post('/api/lances', async (req, res) => {
     });
   } catch (error) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: error.message });
+    res.status(error.paymentSetupError ? 503 : 500).json({
+      error: error.paymentSetupError
+        ? 'O pagamento Pix está indisponível porque a conta Asaas ainda não foi aprovada. Configure uma conta aprovada ou use o ambiente Sandbox para testes.'
+        : error.message
+    });
   } finally {
     client.release();
   }

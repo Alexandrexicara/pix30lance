@@ -2,7 +2,7 @@ const axios = require('axios');
 const QRCode = require('qrcode');
 
 const ASAAS_PRODUCTION_URL = 'https://api.asaas.com/v3';
-const ASAAS_SANDBOX_URL = 'https://sandbox.asaas.com/v3';
+const ASAAS_SANDBOX_URL = 'https://api-sandbox.asaas.com/v3';
 
 class AsaasService {
   constructor() {
@@ -211,7 +211,7 @@ class AsaasService {
   }
 
   cleanCpfCnpj(cpfCnpj) {
-    if (!cpfCnpj) return '00000000000';
+    if (!cpfCnpj) return '';
     // Remove todos os caracteres não numéricos
     return cpfCnpj.replace(/\D/g, '');
   }

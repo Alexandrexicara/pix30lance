@@ -409,7 +409,7 @@ async function handleBidSubmit(e) {
     startPaymentCheck();
   } catch (error) {
     console.error('Erro ao fazer lance:', error);
-    alert('Erro ao fazer lance. Tente novamente.');
+    alert(error.message || 'Erro ao fazer lance. Tente novamente.');
   }
 }
 
