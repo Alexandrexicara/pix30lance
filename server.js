@@ -229,6 +229,17 @@ async function initDatabase() {
       )
     `);
 
+    // CREATE TABLE IF NOT EXISTS não adiciona colunas em tabelas existentes.
+    await pool.query(`
+      ALTER TABLE lances
+        ADD COLUMN IF NOT EXISTS status_pix VARCHAR(20) DEFAULT 'pendente',
+        ADD COLUMN IF NOT EXISTS pix_confirmado_em TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS asaas_order_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS qr_code_string TEXT,
+        ADD COLUMN IF NOT EXISTS qr_code_image TEXT,
+        ADD COLUMN IF NOT EXISTS copy_paste_code TEXT
+    `);
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS auditoria_lances (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -386,6 +397,11 @@ app.post('/api/lances', async (req, res) => {
     console.log('ASAAS_API_KEY:', process.env.ASAAS_API_KEY ? 'configured' : 'NOT configured');
 
     const { leilao_id, usuario_id, valor } = req.body;
+    const valorLance = Number(valor);
+
+    if (!Number.isFinite(valorLance) || valorLance < 5) {
+      throw new Error('O valor do lance deve ser de no mínimo R$ 5,00, que é o valor mínimo aceito pelo Asaas.');
+    }
     
     // Check if auction is still active (only checks date, NOT meta percentage)
     const leilao = await client.query(
@@ -411,7 +427,7 @@ app.post('/api/lances', async (req, res) => {
       INSERT INTO lances (leilao_id, usuario_id, valor)
       VALUES ($1, $2, $3)
       RETURNING *
-    `, [leilao_id, usuario_id, valor]);
+    `, [leilao_id, usuario_id, valorLance]);
     const lanceId = insertResult.rows[0].id;
     const lanceData = insertResult.rows[0];
     
@@ -427,7 +443,8 @@ app.post('/api/lances', async (req, res) => {
 
     const customerData = userData.rows[0] || null;
 
-    const pixPayment = await asaas.generatePixPayment(valor, description, referenceId, customerData);
+    // A cobrança Pix é exatamente o valor informado no lance, nunca o valor da meta/prêmio.
+    const pixPayment = await asaas.generatePixPayment(valorLance, description, referenceId, customerData);
     
     if (!pixPayment.success) {
       const error = new Error(`Erro ao gerar pagamento Pix: ${pixPayment.error}`);
@@ -450,7 +467,7 @@ app.post('/api/lances', async (req, res) => {
     await client.query(`
       INSERT INTO auditoria_lances (lance_id, acao, detalhes)
       VALUES ($1, 'criado', $2)
-    `, [lanceId, `Lance de R$ ${valor} criado/alterado com Asaas order ${pixPayment.orderId}`]);
+    `, [lanceId, `Lance de R$ ${valorLance} criado/alterado com Asaas order ${pixPayment.orderId}`]);
     
     await client.query('COMMIT');
     
@@ -460,7 +477,7 @@ app.post('/api/lances', async (req, res) => {
       orderId: pixPayment.orderId,
       qrCodeImage: pixPayment.qrCodeImage,
       copyPasteCode: pixPayment.copyPasteCode,
-      valor: valor,
+      valor: valorLance,
       expiresAt: pixPayment.expiresAt,
       demo: isDemo
     });

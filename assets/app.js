@@ -272,7 +272,7 @@ async function openAuction(auctionId) {
             
             <form id="bidForm">
               <label>Valor do lance (R$)
-                <input type="number" step="0.01" min="0.01" id="bidAmount" required placeholder="Ex: 10.00">
+                <input type="number" step="0.01" min="5" id="bidAmount" required placeholder="Ex: 10.00">
               </label>
               <button type="submit" class="btn primary full">Fazer lance via Pix</button>
             </form>
@@ -326,8 +326,8 @@ async function handleBidSubmit(e) {
     return;
   }
   
-  if (bidAmount < 0.01) {
-    alert('O valor mínimo do lance é R$ 0,01.');
+  if (bidAmount < 5) {
+    alert('O valor mínimo do lance é R$ 5,00, que é o mínimo aceito pelo Asaas.');
     return;
   }
   

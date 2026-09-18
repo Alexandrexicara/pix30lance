@@ -30,6 +30,10 @@ class AsaasService {
         throw new Error('Valor do Pix inválido.');
       }
 
+      if (valor < 5) {
+        throw new Error('O Asaas aceita cobranças Pix a partir de R$ 5,00.');
+      }
+
       console.log('==========================================');
       console.log('💰 CRIANDO PIX ASAAS');
       console.log('Valor:', valor);
