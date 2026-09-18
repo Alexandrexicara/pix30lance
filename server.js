@@ -185,6 +185,16 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS carrossel_topo (
+        id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+        imagem_url_1 VARCHAR(1000),
+        imagem_url_2 VARCHAR(1000),
+        imagem_url_3 VARCHAR(1000),
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add missing columns if they don't exist (for existing tables)
     try {
       await pool.query(`ALTER TABLE leiloes ADD COLUMN IF NOT EXISTS foto_url_2 VARCHAR(500)`);
@@ -311,6 +321,38 @@ app.get('/api/leiloes/:id', async (req, res) => {
     }
     
     res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/carrossel-topo', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT imagem_url_1, imagem_url_2, imagem_url_3 FROM carrossel_topo WHERE id = 1');
+    res.json(result.rows[0] || {});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/carrossel-topo', async (req, res) => {
+  try {
+    const urls = [req.body.imagem_url_1, req.body.imagem_url_2, req.body.imagem_url_3];
+    if (urls.some(url => url && !/^https?:\/\//i.test(url))) {
+      return res.status(400).json({ error: 'Cada imagem precisa ser uma URL http ou https válida.' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO carrossel_topo (id, imagem_url_1, imagem_url_2, imagem_url_3, atualizado_em)
+      VALUES (1, $1, $2, $3, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        imagem_url_1 = EXCLUDED.imagem_url_1,
+        imagem_url_2 = EXCLUDED.imagem_url_2,
+        imagem_url_3 = EXCLUDED.imagem_url_3,
+        atualizado_em = CURRENT_TIMESTAMP
+      RETURNING imagem_url_1, imagem_url_2, imagem_url_3
+    `, urls);
+    res.json({ success: true, ...result.rows[0] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

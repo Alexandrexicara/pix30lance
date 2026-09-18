@@ -79,6 +79,26 @@
           </form>
         </div>
 
+        <div class="admin-section">
+          <h3>Imagens do carrossel do topo</h3>
+          <p class="admin-help">Cole as URLs permanentes do Cloudinary. Elas aparecerão no carrossel no topo da página inicial.</p>
+          <form id="topCarouselForm">
+            <label>Imagem do prêmio 1
+              <input type="file" id="topCarouselFile1" accept="image/jpeg,image/jpg,image/png,image/webp">
+              <input type="url" id="topCarouselImage1" placeholder="https://res.cloudinary.com/...">
+            </label>
+            <label>Imagem do prêmio 2
+              <input type="file" id="topCarouselFile2" accept="image/jpeg,image/jpg,image/png,image/webp">
+              <input type="url" id="topCarouselImage2" placeholder="https://res.cloudinary.com/...">
+            </label>
+            <label>Imagem do prêmio 3
+              <input type="file" id="topCarouselFile3" accept="image/jpeg,image/jpg,image/png,image/webp">
+              <input type="url" id="topCarouselImage3" placeholder="https://res.cloudinary.com/...">
+            </label>
+            <button type="submit" class="btn primary">Salvar imagens do carrossel</button>
+          </form>
+        </div>
+
         <!-- Lista de Leilões -->
         <div class="admin-section">
           <h3>Leilões Cadastrados</h3>
@@ -160,6 +180,53 @@
       } catch (error) {
         console.error('Erro ao carregar leilões:', error);
         document.getElementById('adminAuctions').innerHTML = '<p class="error">Erro ao carregar leilões.</p>';
+      }
+    }
+
+    async function loadTopCarousel() {
+      try {
+        const response = await fetch(`${API_BASE}/carrossel-topo`);
+        const images = await response.json();
+        document.getElementById('topCarouselImage1').value = images.imagem_url_1 || '';
+        document.getElementById('topCarouselImage2').value = images.imagem_url_2 || '';
+        document.getElementById('topCarouselImage3').value = images.imagem_url_3 || '';
+      } catch (error) {
+        console.error('Erro ao carregar imagens do carrossel:', error);
+      }
+    }
+
+    async function saveTopCarousel(e) {
+      e.preventDefault();
+      const uploadImage = async file => {
+        if (!file) return null;
+        const formData = new FormData();
+        formData.append('foto', file);
+        const response = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.error || 'Erro ao enviar imagem.');
+        return result.fotoUrl;
+      };
+
+      const payload = {
+        imagem_url_1: document.getElementById('topCarouselImage1').value.trim(),
+        imagem_url_2: document.getElementById('topCarouselImage2').value.trim(),
+        imagem_url_3: document.getElementById('topCarouselImage3').value.trim()
+      };
+
+      try {
+        payload.imagem_url_1 = await uploadImage(document.getElementById('topCarouselFile1').files[0]) || payload.imagem_url_1;
+        payload.imagem_url_2 = await uploadImage(document.getElementById('topCarouselFile2').files[0]) || payload.imagem_url_2;
+        payload.imagem_url_3 = await uploadImage(document.getElementById('topCarouselFile3').files[0]) || payload.imagem_url_3;
+        const response = await fetch(`${API_BASE}/carrossel-topo`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Erro ao salvar imagens.');
+        alert('Imagens do carrossel salvas com sucesso!');
+      } catch (error) {
+        alert(error.message);
       }
     }
 
@@ -416,9 +483,11 @@
 
     // Event listeners
     document.getElementById('createAuctionForm').onsubmit = createAuction;
+    document.getElementById('topCarouselForm').onsubmit = saveTopCarousel;
 
     // Initialize
     loadAdminAuctions();
+    loadTopCarousel();
     showAllBids();
     loadWinnerNotifications();
   </script>

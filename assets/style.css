@@ -240,5 +240,26 @@ label {
   color: #ffffff;
 }
 
+/* Prize carousel */
+.prize-carousel{position:relative;height:360px;background:#07100d;border-bottom:1px solid #1b292d;overflow:hidden}
+.prize-slides,.prize-slide{width:100%;height:100%}
+.prize-slide{position:absolute;inset:0;opacity:0;transition:opacity .7s ease;pointer-events:none}
+.prize-slide.active{opacity:1;pointer-events:auto}
+.prize-slide::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,8,10,.88) 0%,rgba(5,8,10,.48) 45%,rgba(5,8,10,.18) 100%)}
+.prize-slide img{width:100%;height:100%;object-fit:cover}
+.prize-caption{position:absolute;z-index:1;top:50%;left:max(4%,calc((100% - 1120px)/2));transform:translateY(-50%);max-width:570px}
+.prize-caption h2{font-size:clamp(30px,4vw,54px);line-height:1.05;margin:12px 0;color:#fff}
+.prize-caption p:last-child{color:#d3dddd;font-size:16px;line-height:1.5;margin:0}
+.prize-carousel-btn{position:absolute;z-index:3;top:50%;transform:translateY(-50%);width:44px;height:44px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(5,8,10,.65);color:#fff;font-size:20px;cursor:pointer}
+.prize-carousel-btn:hover{background:#39ff88;color:#031009;border-color:#39ff88}
+.prize-carousel-btn.prev{left:22px}.prize-carousel-btn.next{right:22px}
+.prize-indicators{position:absolute;z-index:3;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:9px}
+.prize-indicators button{width:28px;height:4px;padding:0;border:0;border-radius:3px;background:rgba(255,255,255,.45);cursor:pointer}
+.prize-indicators button.active{background:#39ff88}
+
 @media(max-width:850px){.hero-grid,.offer{grid-template-columns:1fr}.products{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:repeat(2,1fr)}.nav nav{display:none}.hero{padding-top:55px}.auction-detail{grid-template-columns:1fr}.carousel-container{height:200px}}
-@media(max-width:520px){.products{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.hero h1{font-size:43px}.footer{display:block}.footer p{line-height:1.5}.section{padding:60px 0}.auction-stats{grid-template-columns:1fr}.carousel-container{height:180px}.carousel-container.detail-carousel{height:350px}}
+@media(max-width:520px){.products{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.hero h1{font-size:43px}.footer{display:block}.footer p{line-height:1.5}.section{padding:60px 0}.auction-stats{grid-template-columns:1fr}.carousel-container{height:180px}.carousel-container.detail-carousel{height:350px}.prize-carousel{height:270px}.prize-caption{left:58px;right:46px}.prize-caption h2{font-size:31px}.prize-caption p:last-child{font-size:14px}.prize-carousel-btn{width:34px;height:34px;font-size:16px}.prize-carousel-btn.prev{left:10px}.prize-carousel-btn.next{right:10px}.prize-indicators{bottom:14px}}
+
+.logo b{font-size:1.35em;line-height:.7;vertical-align:middle}
+.minimum-bid-notice{display:block;margin-top:7px;color:#ffaa00;font-size:12px;font-weight:600}
+.admin-help{color:#aab7b9;font-size:13px;margin:-8px 0 18px}

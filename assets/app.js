@@ -14,6 +14,37 @@ function setPendingBidAmount(amount) {
 const money = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatDate = d => new Date(d).toLocaleDateString('pt-BR');
 
+function initPrizeCarousel() {
+  const carousel = document.querySelector('.prize-carousel');
+  if (!carousel) return;
+
+  const slides = [...carousel.querySelectorAll('.prize-slide')];
+  const indicators = [...carousel.querySelectorAll('.prize-indicators button')];
+  let currentIndex = 0;
+
+  fetch(`${API_BASE}/carrossel-topo`)
+    .then(response => response.ok ? response.json() : {})
+    .then(images => {
+      [images.imagem_url_1, images.imagem_url_2, images.imagem_url_3].forEach((url, index) => {
+        if (url && slides[index]) slides[index].querySelector('img').src = url;
+      });
+    })
+    .catch(() => {});
+
+  const showSlide = index => {
+    currentIndex = (index + slides.length) % slides.length;
+    slides.forEach((slide, slideIndex) => slide.classList.toggle('active', slideIndex === currentIndex));
+    indicators.forEach((indicator, indicatorIndex) => indicator.classList.toggle('active', indicatorIndex === currentIndex));
+  };
+
+  carousel.querySelector('.prize-carousel-btn.prev').addEventListener('click', () => showSlide(currentIndex - 1));
+  carousel.querySelector('.prize-carousel-btn.next').addEventListener('click', () => showSlide(currentIndex + 1));
+  indicators.forEach((indicator, index) => indicator.addEventListener('click', () => showSlide(index)));
+  setInterval(() => showSlide(currentIndex + 1), 4000);
+}
+
+initPrizeCarousel();
+
 // Carousel functions
 const carouselStates = {};
 
@@ -273,6 +304,7 @@ async function openAuction(auctionId) {
             <form id="bidForm">
               <label>Valor do lance (R$)
                 <input type="number" step="0.01" min="5" id="bidAmount" required placeholder="Ex: 10.00">
+                <small class="minimum-bid-notice">Valor mínimo do lance: <strong>R$ 5,00</strong> (mínimo aceito pelo Asaas).</small>
               </label>
               <button type="submit" class="btn primary full">Fazer lance via Pix</button>
             </form>
