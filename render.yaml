@@ -11,8 +11,6 @@ services:
         value: 3000
       - key: BASE_URL
         value: https://pix30lances.onrender.com
-      - key: ASAAS_SANDBOX
-        value: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY

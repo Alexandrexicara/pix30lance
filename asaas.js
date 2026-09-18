@@ -2,13 +2,11 @@ const axios = require('axios');
 const QRCode = require('qrcode');
 
 const ASAAS_PRODUCTION_URL = 'https://api.asaas.com/v3';
-const ASAAS_SANDBOX_URL = 'https://api-sandbox.asaas.com/v3';
-
 class AsaasService {
   constructor() {
     this.apiKey = process.env.ASAAS_API_KEY;
-    this.isSandbox = process.env.ASAAS_SANDBOX === 'true';
-    this.baseUrl = this.isSandbox ? ASAAS_SANDBOX_URL : ASAAS_PRODUCTION_URL;
+    this.isSandbox = false;
+    this.baseUrl = ASAAS_PRODUCTION_URL;
 
     if (!this.apiKey) {
       console.warn('⚠️ ASAAS_API_KEY não configurada.');

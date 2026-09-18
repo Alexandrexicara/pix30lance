@@ -20,14 +20,17 @@ Configure as seguintes variáveis de ambiente no seu web service:
 - `PORT`: 3000
 - `BASE_URL`: https://pix30lances.onrender.com
 
-**Opcionais (para funcionalidades completas):**
+**Obrigatórias para upload de imagens e pagamentos:**
 - `ASAAS_API_KEY`: Chave da API do Asaas para pagamentos Pix
-- `ASAAS_SANDBOX`: false (produção; use uma `ASAAS_API_KEY` da conta de produção)
+- Use uma `ASAAS_API_KEY` da conta de produção do Asaas.
 - `CLOUDINARY_CLOUD_NAME`: Nome do cloud Cloudinary
 - `CLOUDINARY_API_KEY`: Chave da API Cloudinary
 - `CLOUDINARY_API_SECRET`: Secret da API Cloudinary
 - `CLOUDINARY_URL`: URL completa do Cloudinary
-- `ADMIN_WHATSAPP_PHONE`: Número WhatsApp para notificações (ex: 5511999999999)
+
+Para o Cloudinary, configure **ou** `CLOUDINARY_URL` **ou** as três variáveis `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` e `CLOUDINARY_API_SECRET`.
+
+`ADMIN_WHATSAPP_PHONE` é opcional.
 
 ### 2. Conectar Repositório GitHub
 
