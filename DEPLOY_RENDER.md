@@ -22,7 +22,7 @@ Configure as seguintes variáveis de ambiente no seu web service:
 
 **Opcionais (para funcionalidades completas):**
 - `ASAAS_API_KEY`: Chave da API do Asaas para pagamentos Pix
-- `ASAAS_SANDBOX`: true (para testes) ou false (produção)
+- `ASAAS_SANDBOX`: false (produção; use uma `ASAAS_API_KEY` da conta de produção)
 - `CLOUDINARY_CLOUD_NAME`: Nome do cloud Cloudinary
 - `CLOUDINARY_API_KEY`: Chave da API Cloudinary
 - `CLOUDINARY_API_SECRET`: Secret da API Cloudinary

@@ -1107,6 +1107,15 @@ app.post('/api/upload', upload.single('foto'), (req, res) => {
       console.log('Usando caminho informado pelo storage:', fotoUrl);
     }
 
+    // O disco local do Render é temporário; não salve caminhos /uploads em produção.
+    if (!fotoUrl || !/^https?:\/\//i.test(fotoUrl)) {
+      console.error('Upload não persistente: configure o Cloudinary no Render.');
+      return res.status(503).json({
+        success: false,
+        error: 'O armazenamento permanente de imagens não está configurado. Informe CLOUDINARY_URL ou as três variáveis do Cloudinary no Render.'
+      });
+    }
+
     console.log('URL final:', fotoUrl);
     res.json({ success: true, fotoUrl: fotoUrl });
   } catch (error) {
