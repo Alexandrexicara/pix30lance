@@ -8,17 +8,14 @@ const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
 
-// Try different import methods for CloudinaryStorage
+// Support both export formats used by multer-storage-cloudinary versions.
 let CloudinaryStorage;
 try {
-  CloudinaryStorage = require('multer-storage-cloudinary').CloudinaryStorage;
-} catch (e) {
-  try {
-    CloudinaryStorage = require('multer-storage-cloudinary');
-  } catch (e2) {
-    console.log('⚠️ multer-storage-cloudinary não disponível, usando storage local');
-    CloudinaryStorage = null;
-  }
+  const cloudinaryStorageModule = require('multer-storage-cloudinary');
+  CloudinaryStorage = cloudinaryStorageModule.CloudinaryStorage || cloudinaryStorageModule;
+} catch (error) {
+  console.log('multer-storage-cloudinary não disponível, usando storage local');
+  CloudinaryStorage = null;
 }
 
 const app = express();
