@@ -202,7 +202,13 @@
         const formData = new FormData();
         formData.append('foto', file);
         const response = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-        const result = await response.json();
+        const responseText = await response.text();
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (error) {
+          throw new Error(`Resposta inválida do servidor (HTTP ${response.status})`);
+        }
         if (!response.ok || !result.success) throw new Error(result.error || 'Erro ao enviar imagem.');
         return result.fotoUrl;
       };
@@ -265,7 +271,13 @@
           const formData = new FormData();
           formData.append('foto', file);
           const uploadResponse = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
-          const uploadResult = await uploadResponse.json();
+          const uploadText = await uploadResponse.text();
+          let uploadResult;
+          try {
+            uploadResult = uploadText ? JSON.parse(uploadText) : {};
+          } catch (error) {
+            throw new Error(`Resposta inválida do servidor (HTTP ${uploadResponse.status})`);
+          }
           if (!uploadResponse.ok || !uploadResult.success || !uploadResult.fotoUrl) {
             throw new Error(uploadResult.error || `Falha no upload (HTTP ${uploadResponse.status})`);
           }

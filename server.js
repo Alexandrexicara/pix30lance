@@ -1111,7 +1111,19 @@ app.get('/api/admin/lances', async (req, res) => {
 });
 
 // Upload product image
-app.post('/api/upload', upload.single('foto'), (req, res) => {
+app.post('/api/upload', (req, res, next) => {
+  upload.single('foto')(req, res, error => {
+    if (error) {
+      console.error('Erro ao processar arquivo:', error);
+      const status = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+      return res.status(status).json({
+        success: false,
+        error: error.message || 'Não foi possível processar a imagem.'
+      });
+    }
+    next();
+  });
+}, (req, res) => {
   try {
     console.log('=== UPLOAD INICIADO ===');
     console.log('Headers:', req.headers['content-type']);
