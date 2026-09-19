@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const AsaasService = require('./asaas');
 const multer = require('multer');
 const path = require('path');
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require('cloudinary');
 
 // Support both export formats used by multer-storage-cloudinary versions.
 let CloudinaryStorage;
@@ -25,10 +25,10 @@ const port = process.env.PORT || 3000;
 try {
   if (process.env.CLOUDINARY_URL) {
     console.log('CLOUDINARY_URL encontrada:', process.env.CLOUDINARY_URL.substring(0, 20) + '...');
-    cloudinary.config(process.env.CLOUDINARY_URL);
+    cloudinary.v2.config(process.env.CLOUDINARY_URL);
     console.log('Cloudinary configurado com URL');
   } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-    cloudinary.config({
+    cloudinary.v2.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET
@@ -1127,7 +1127,7 @@ app.post('/api/upload', (req, res, next) => {
   try {
     console.log('=== UPLOAD INICIADO ===');
     console.log('Headers:', req.headers['content-type']);
-    console.log('Cloudinary configurado:', !!cloudinary.config().cloud_name);
+    console.log('Cloudinary configurado:', !!cloudinary.v2.config().cloud_name);
 
     if (!req.file) {
       console.error('Nenhum arquivo enviado');

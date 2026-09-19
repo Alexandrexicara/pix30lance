@@ -384,7 +384,7 @@
                   <td>${bid.usuario_telefone || '-'}</td>
                   <td>${bid.usuario_cpf_cnpj || '-'}</td>
                   <td>${bid.leilao_nome}</td>
-                  <td>R$ ${bid.valor?.toFixed(2) || 'N/A'}</td>
+                  <td>R$ ${Number.isFinite(Number(bid.valor)) ? Number(bid.valor).toFixed(2) : 'N/A'}</td>
                   <td><span class="status ${bid.status_pix}">${bid.status_pix}</span></td>
                   <td>${new Date(bid.criado_em).toLocaleString('pt-BR')}</td>
                 </tr>
