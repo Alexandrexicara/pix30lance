@@ -76,12 +76,9 @@ Isso foi corrigido nos arquivos JavaScript. Se persistir:
 2. Verifique se `package.json` tem o script `start` correto
 3. Veja os logs de build no Render
 
-## Modo Demonstração
+## Pagamentos
 
-O sistema funciona em modo demonstração sem as chaves de API:
-- QR Codes são gerados para teste
-- Pagamentos não são processados
-- Use "Confirmar manualmente" para testar o fluxo
+Os pagamentos são confirmados somente após validação do status da cobrança pelo Asaas.
 
 ## Próximos Passos Após Deploy
 

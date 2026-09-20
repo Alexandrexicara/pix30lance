@@ -72,13 +72,13 @@ A plataforma está integrada com a API PagBank para:
 - Geração automática de QR Code Pix
 - Verificação automática de status de pagamento
 - Webhook para notificações de pagamento
-- Confirmação manual como fallback
+- Confirmação somente após validação do Asaas
 
 Funcionalidades:
 - QR Code Pix gerado automaticamente para cada lance
 - Verificação automática de pagamento a cada 10 segundos
 - Webhook para confirmação em tempo real
-- Opção de confirmação manual se necessário
+- Verificação automática de pagamento pelo Asaas
 - Suporte a ambiente sandbox para testes
 
 REGRA DO LEILÃO
@@ -102,8 +102,7 @@ POST /api/leiloes - Criar novo leilão (admin)
 POST /api/usuarios - Criar/atualizar usuário
 POST /api/lances - Dar lance (gera QR Code Pix via PagBank)
 GET /api/lances/:id/check-payment - Verificar status pagamento PagBank
-POST /api/lances/:id/confirmar-pix - Confirmar pagamento manualmente
-POST /api/pagbank/webhook - Webhook PagBank para notificações
+POST /api/asaas/webhook - Webhook Asaas para notificações
 GET /api/usuarios/:id/lances - Lances do usuário
 POST /api/leiloes/:id/calcular-vencedor - Calcular vencedor
 GET /api/leiloes/:id/resultado - Resultado do leilão

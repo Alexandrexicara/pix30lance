@@ -406,14 +406,10 @@ async function handleBidSubmit(e) {
     const pixModal = document.getElementById('pixModal');
     const pixContent = pixModal.querySelector('.modal-box');
     
-    const isDemo = result.demo || false;
-    const demoWarning = isDemo ? `<p class="demo-warning">⚠️ <strong>MODO DEMONSTRAÇÃO:</strong> Pagamentos não são processados pelo PagBank. Use "Confirmar manualmente" para testar.</p>` : '';
-    
     pixContent.innerHTML = `
       <button class="modal-close" id="closePixModal">✕</button>
       <p class="eyebrow">PAGAMENTO PIX</p>
       <h2>Pague seu lance via Pix</h2>
-      ${demoWarning}
       <div class="qr-code-container">
         ${result.qrCodeImage ? `<img src="${result.qrCodeImage}" alt="QR Code Pix" class="qr-code-image">` : ''}
       </div>
@@ -422,8 +418,7 @@ async function handleBidSubmit(e) {
       <p class="warning">⚠️ Você NÃO está comprando o produto. Este é o valor do seu lance para participar do leilão.</p>
       <p class="expires">⏰ Expira em: ${new Date(result.expiresAt).toLocaleTimeString('pt-BR')}</p>
       <button class="btn primary full" id="copyPix">Copiar código Pix</button>
-      ${!isDemo ? `<button class="btn ghost full" id="checkPayment">Verificar pagamento</button>` : ''}
-      <button class="btn ghost full" id="confirmPix">Confirmar manualmente</button>
+      <button class="btn ghost full" id="checkPayment">Verificar pagamento</button>
     `;
     
     document.getElementById('auctionModal').classList.remove('show');
@@ -433,9 +428,7 @@ async function handleBidSubmit(e) {
     // Re-attach event listeners
     document.getElementById('closePixModal').onclick = () => closeModal('pixModal');
     document.getElementById('copyPix').onclick = copyPixCode;
-    const checkPaymentButton = document.getElementById('checkPayment');
-    if (checkPaymentButton) checkPaymentButton.onclick = checkPaymentStatus;
-    document.getElementById('confirmPix').onclick = confirmPixPayment;
+    document.getElementById('checkPayment').onclick = checkPaymentStatus;
     
     // Auto-check payment status every 10 seconds
     startPaymentCheck();
@@ -522,40 +515,6 @@ function stopPaymentCheck() {
   if (paymentCheckInterval) {
     clearInterval(paymentCheckInterval);
     paymentCheckInterval = null;
-  }
-}
-
-// Confirm Pix payment (manual fallback)
-async function confirmPixPayment() {
-  if (!currentBidId) {
-    alert('Nenhum lance para confirmar.');
-    return;
-  }
-  
-  stopPaymentCheck();
-  
-  try {
-    const response = await fetch(`${API_BASE}/lances/${currentBidId}/confirmar-pix`, {
-      method: 'POST'
-    });
-    
-    const result = await response.json();
-    
-    if (result.error) {
-      alert(result.error);
-      return;
-    }
-    
-    alert('✓ Pagamento Pix confirmado manualmente! Seu lance está válido.');
-    closeModal('pixModal');
-    
-    // Reload auction details
-    if (currentAuctionId) {
-      openAuction(currentAuctionId);
-    }
-  } catch (error) {
-    console.error('Erro ao confirmar Pix:', error);
-    alert('Erro ao confirmar pagamento. Tente novamente.');
   }
 }
 
@@ -790,7 +749,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const overlay = document.getElementById('overlay');
   const userForm = document.getElementById('userForm');
   const copyPixBtn = document.getElementById('copyPix');
-  const confirmPixBtn = document.getElementById('confirmPix');
   
   if(openMyBidsBtn) openMyBidsBtn.onclick = openMyBids;
   if(openRegisterBtn) openRegisterBtn.onclick = openRegisterModal;
@@ -823,8 +781,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
   
-  if(confirmPixBtn) confirmPixBtn.onclick = confirmPixPayment;
-
   // Initialize
   loadAuctions();
 });

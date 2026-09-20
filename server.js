@@ -608,52 +608,6 @@ app.get('/api/lances/:id/check-payment', async (req, res) => {
   }
 });
 
-// Manual confirm Pix payment (fallback)
-app.post('/api/lances/:id/confirmar-pix', async (req, res) => {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    
-    const { id } = req.params;
-    
-    const result = await client.query(`
-      UPDATE lances 
-      SET status_pix = 'confirmado', pix_confirmado_em = CURRENT_TIMESTAMP
-      WHERE id = $1 AND status_pix = 'pendente'
-      RETURNING *
-    `, [id]);
-    
-    if (result.rows.length === 0) {
-      throw new Error('Lance não encontrado ou já confirmado');
-    }
-    
-    // Log to audit
-    await client.query(`
-      INSERT INTO auditoria_lances (lance_id, acao, detalhes)
-      VALUES ($1, 'pix_confirmado', 'Pagamento Pix confirmado manualmente')
-    `, [id]);
-    
-    // Update auction total
-    await client.query(`
-      UPDATE leiloes 
-      SET valor_arrecadado = (
-        SELECT COALESCE(SUM(valor), 0)
-        FROM lances
-        WHERE leilao_id = $1 AND status_pix = 'confirmado'
-      )
-      WHERE id = $1
-    `, [result.rows[0].leilao_id]);
-    
-    await client.query('COMMIT');
-    res.json(result.rows[0]);
-  } catch (error) {
-    await client.query('ROLLBACK');
-    res.status(500).json({ error: error.message });
-  } finally {
-    client.release();
-  }
-});
-
 // Asaas webhook endpoint
 app.post('/api/asaas/webhook', async (req, res) => {
   try {

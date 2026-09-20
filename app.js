@@ -305,13 +305,10 @@ async function handleBidSubmit(e) {
       currentBidId = result.lanceId;
       const pixModal = document.getElementById('pixModal');
       const pixContent = pixModal.querySelector('.modal-box');
-      const isDemo = result.demo || false;
-      const demoWarning = isDemo ? `<p class="demo-warning">⚠️ <strong>MODO DEMONSTRAÇÃO:</strong> Pagamentos não são processados pelo PagBank. Use "Confirmar manualmente" para testar.</p>` : '';
       pixContent.innerHTML = `
         <button class="modal-close close-pix-modal">✕</button>
         <p class="eyebrow">PAGAMENTO PIX</p>
         <h2>Pague seu lance via Pix</h2>
-        ${demoWarning}
         <div class="qr-code-container">
           ${result.qrCodeImage ? `<img src="${result.qrCodeImage}" alt="QR Code Pix" class="qr-code-image">` : ''}
         </div>
@@ -320,8 +317,7 @@ async function handleBidSubmit(e) {
         <p class="warning">⚠️ Você NÃO está comprando o produto. Este é o valor do seu lance para participar do leilão.</p>
         <p class="expires">⏰ Expira em: ${new Date(result.expiresAt).toLocaleTimeString('pt-BR')}</p>
         <button class="btn primary full" id="copyPix">Copiar código Pix</button>
-        ${!isDemo ? `<button class="btn ghost full" id="checkPayment">Verificar pagamento</button>` : ''}
-        <button class="btn ghost full" id="confirmPix">Confirmar manualmente</button>
+        <button class="btn ghost full" id="checkPayment">Verificar pagamento</button>
       `;
       document.getElementById('auctionModal').classList.remove('show');
       pixModal.classList.add('show');
@@ -330,8 +326,7 @@ async function handleBidSubmit(e) {
       // Use event delegation for dynamically created close button
       document.querySelector('.close-pix-modal').onclick = () => closeModal('pixModal');
       document.getElementById('copyPix').onclick = copyPixCode;
-      if (!isDemo) document.getElementById('checkPayment').onclick = checkPaymentStatus;
-      document.getElementById('confirmPix').onclick = confirmPixPayment;
+      document.getElementById('checkPayment').onclick = checkPaymentStatus;
       startPaymentCheck();
     } catch (parseErr) {
       alert(`❌ Erro ${response.status}\n\nServidor retornou:\n${text.substring(0,500)}`);
@@ -392,17 +387,6 @@ function startPaymentCheck() {
 }
 function stopPaymentCheck() {
   if (paymentCheckInterval) { clearInterval(paymentCheckInterval); paymentCheckInterval = null; }
-}
-async function confirmPixPayment() {
-  if (!currentBidId) return alert('Nenhum lance.');
-  stopPaymentCheck();
-  try {
-    const r = await fetch(`${API_BASE}/lances/${currentBidId}/confirmar-pix`, {method:'POST'}).then(x => x.json());
-    if (r.error) return alert(r.error);
-    alert('✓ Confirmado!');
-    closeModal('pixModal');
-    if (currentAuctionId) openAuction(currentAuctionId);
-  } catch(e) { alert('Erro.'); }
 }
 function openMyBids() {
   const t = document.getElementById('myBidsModalTitle'); if(t) t.textContent = 'Meus Lances e Participações';

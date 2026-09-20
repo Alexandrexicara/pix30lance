@@ -31,12 +31,7 @@ Para que o sistema funcione corretamente no Render, você precisa configurar as 
 
 ## Nota Importante
 
-O sistema funciona em **modo demonstração** se as credenciais do PagBank não estiverem configuradas corretamente. 
-
-No modo demonstração:
-- QR Codes são gerados para teste
-- Pagamentos não são processados pelo PagBank
-- Usuários devem usar "Confirmar manualmente" para testar o fluxo
+O status do pagamento deve ser validado pelo Asaas antes de confirmar o lance.
 
 Para produção, você precisa:
 1. Criar conta no PagBank: https://pagseguro.uol.com.br/
