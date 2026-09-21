@@ -285,10 +285,6 @@ async function openAuction(auctionId) {
               <span>Meta do leilão</span>
               <strong>${money(auction.valor_meta)}</strong>
             </div>
-            <div class="stat">
-              <span>Participantes</span>
-              <strong>${auction.participantes || 0}</strong>
-            </div>
           </div>
           
           <div class="progress-bar">
