@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const AsaasService = require('./asaas');
+const { registerMcpEndpoint } = require('./mcp-server');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('cloudinary');
@@ -53,6 +54,7 @@ const pool = new Pool({
 
 // Initialize Asaas service
 const asaas = new AsaasService();
+registerMcpEndpoint(app, { pool, asaas });
 
 // Sistema de notificações via WhatsApp link (wa.me)
 function generateWhatsAppLink(phone, message) {
