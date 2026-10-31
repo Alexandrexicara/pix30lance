@@ -54,7 +54,6 @@ const pool = new Pool({
 
 // Initialize Asaas service
 const asaas = new AsaasService();
-registerMcpEndpoint(app, { pool, asaas });
 
 // Sistema de notificações via WhatsApp link (wa.me)
 function generateWhatsAppLink(phone, message) {
@@ -146,6 +145,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+registerMcpEndpoint(app, { pool, asaas });
 app.use(express.static('.'));
 app.use(express.static('public'));
 app.use('/uploads', express.static('public/uploads'));
