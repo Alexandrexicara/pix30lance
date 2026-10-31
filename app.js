@@ -135,10 +135,6 @@ async function loadAuctions() {
                 <span>Meta</span>
                 <strong>${money(a.valor_meta)}</strong>
               </div>
-              <div class="stat">
-                <span>Participantes</span>
-                <strong>${a.participantes || 0}</strong>
-              </div>
             </div>
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${percentMeta}%"></div>
